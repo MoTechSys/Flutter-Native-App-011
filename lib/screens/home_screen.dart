@@ -7,11 +7,42 @@ import '../models/models.dart';
 import '../services/storage_service.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../services/auth_service.dart';
 import 'about_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final ValueChanged<int> onNavigate;
-  const HomeScreen({super.key, required this.onNavigate});
+  final VoidCallback onLogout;
+  const HomeScreen({
+    super.key,
+    required this.onNavigate,
+    required this.onLogout,
+  });
+
+  Future<void> _logout(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.card,
+        title: const Text('تسجيل الخروج'),
+        content: const Text('هل تريد الخروج من حسابك؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('خروج', style: TextStyle(color: AppColors.red)),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await AuthService.logout();
+      onLogout();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +57,15 @@ class HomeScreen extends StatelessWidget {
             actions: [
               IconButton(
                 icon: const Icon(Icons.info_outline),
-                onPressed: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const AboutScreen())),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AboutScreen()),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.logout),
+                tooltip: 'تسجيل الخروج',
+                onPressed: () => _logout(context),
               ),
             ],
           ),
@@ -86,27 +124,39 @@ class HomeScreen extends StatelessWidget {
                   const Padding(
                     padding: EdgeInsets.all(20),
                     child: Center(
-                      child: Text('لا توجد إصلاحات مسجلة',
-                          style: TextStyle(color: AppColors.textDim)),
+                      child: Text(
+                        'لا توجد إصلاحات مسجلة',
+                        style: TextStyle(color: AppColors.textDim),
+                      ),
                     ),
                   )
                 else
-                  ...s.repairs.take(3).map((r) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Card(
-                          child: ListTile(
-                            leading: const Icon(Icons.build,
-                                color: AppColors.orange),
-                            title: Text(r.title),
-                            subtitle: Text(
-                                '${fmtDate(r.date)} • ${fmtNum(r.odometer)} كم'),
-                            trailing: Text(fmtMoney(r.cost),
+                  ...s.repairs
+                      .take(3)
+                      .map(
+                        (r) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Card(
+                            child: ListTile(
+                              leading: const Icon(
+                                Icons.build,
+                                color: AppColors.orange,
+                              ),
+                              title: Text(r.title),
+                              subtitle: Text(
+                                '${fmtDate(r.date)} • ${fmtNum(r.odometer)} كم',
+                              ),
+                              trailing: Text(
+                                fmtMoney(r.cost),
                                 style: const TextStyle(
-                                    color: AppColors.teal,
-                                    fontWeight: FontWeight.bold)),
+                                  color: AppColors.teal,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      )),
+                      ),
               ],
             ),
           ),
@@ -120,8 +170,10 @@ class _SectionTitle extends StatelessWidget {
   final String text;
   const _SectionTitle(this.text);
   @override
-  Widget build(BuildContext context) => Text(text,
-      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold));
+  Widget build(BuildContext context) => Text(
+    text,
+    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+  );
 }
 
 /// كارت بيانات السيارة مع تعديل العداد
@@ -141,31 +193,36 @@ class _CarCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-                controller: nameCtl,
-                decoration: const InputDecoration(labelText: 'اسم السيارة')),
+              controller: nameCtl,
+              decoration: const InputDecoration(labelText: 'اسم السيارة'),
+            ),
             const SizedBox(height: 12),
             TextField(
-                controller: kmCtl,
-                keyboardType: TextInputType.number,
-                decoration:
-                    const InputDecoration(labelText: 'قراءة العداد (كم)')),
+              controller: kmCtl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'قراءة العداد (كم)'),
+            ),
           ],
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('إلغاء')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('حفظ')),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('حفظ'),
+          ),
         ],
       ),
     );
     if (ok == true) {
-      await StorageService.instance.saveCar(Car(
-        name: nameCtl.text.trim().isEmpty ? 'سيارتي' : nameCtl.text.trim(),
-        odometer: int.tryParse(kmCtl.text) ?? car.odometer,
-      ));
+      await StorageService.instance.saveCar(
+        Car(
+          name: nameCtl.text.trim().isEmpty ? 'سيارتي' : nameCtl.text.trim(),
+          odometer: int.tryParse(kmCtl.text) ?? car.odometer,
+        ),
+      );
     }
   }
 
@@ -183,26 +240,37 @@ class _CarCard extends StatelessWidget {
               color: AppColors.teal.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.directions_car,
-                size: 40, color: AppColors.teal),
+            child: const Icon(
+              Icons.directions_car,
+              size: 40,
+              color: AppColors.teal,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(car.name,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  car.name,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 6),
-                Text('${fmtNum(car.odometer)} كم',
-                    style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.teal)),
-                const Text('قراءة العداد الحالية',
-                    style:
-                        TextStyle(color: AppColors.textDim, fontSize: 12)),
+                Text(
+                  '${fmtNum(car.odometer)} كم',
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.teal,
+                  ),
+                ),
+                const Text(
+                  'قراءة العداد الحالية',
+                  style: TextStyle(color: AppColors.textDim, fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -242,32 +310,38 @@ class _StatusCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               ProgressRing(
-                  progress: s.progressOf(type),
-                  color: color,
-                  icon: typeIcon(type),
-                  size: 52),
+                progress: s.progressOf(type),
+                color: color,
+                icon: typeIcon(type),
+                size: 52,
+              ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusColor(status).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(statusLabel(status),
-                    style: TextStyle(
-                        color: statusColor(status),
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold)),
+                child: Text(
+                  statusLabel(status),
+                  style: TextStyle(
+                    color: statusColor(status),
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
           const Spacer(),
-          Text(type.label,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          Text(
+            type.label,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
           const SizedBox(height: 2),
-          Text(sub,
-              style: const TextStyle(color: AppColors.textDim, fontSize: 12)),
+          Text(
+            sub,
+            style: const TextStyle(color: AppColors.textDim, fontSize: 12),
+          ),
         ],
       ),
     );
@@ -280,12 +354,13 @@ class _MiniStat extends StatelessWidget {
   final String label;
   final String value;
   final VoidCallback onTap;
-  const _MiniStat(
-      {required this.icon,
-      required this.color,
-      required this.label,
-      required this.value,
-      required this.onTap});
+  const _MiniStat({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -298,13 +373,16 @@ class _MiniStat extends StatelessWidget {
         children: [
           Icon(icon, color: color),
           const SizedBox(height: 8),
-          Text(value,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: 15),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis),
-          Text(label,
-              style: const TextStyle(color: AppColors.textDim, fontSize: 12)),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            label,
+            style: const TextStyle(color: AppColors.textDim, fontSize: 12),
+          ),
         ],
       ),
     );

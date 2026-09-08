@@ -1,62 +1,180 @@
 // ============================================================
-// CarCare - خدمة التخزين المحلي (Hive)
-// كل البيانات تُحفظ على الجهاز بدون إنترنت
+// CarCare - خدمة قاعدة البيانات المحلية (SQLite)
+// تنفّذ عمليات CRUD الأربع: إضافة، جلب، تعديل، حذف
 // ============================================================
 
 import 'package:flutter/foundation.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import '../models/models.dart';
+import 'password_hasher.dart';
 
 class StorageService extends ChangeNotifier {
   static final StorageService instance = StorageService._();
   StorageService._();
 
-  late Box _carBox;
-  late Box _maintenanceBox;
-  late Box _fuelBox;
-  late Box _repairBox;
+  late Database _db;
+
+  // ذاكرة مؤقتة للقراءة السريعة في الواجهات (تُحدَّث من قاعدة البيانات)
+  Car _car = Car(name: 'سيارتي', odometer: 0);
+  List<MaintenanceRecord> _maintenance = [];
+  List<FuelRecord> _fuel = [];
+  List<RepairRecord> _repairs = [];
 
   Future<void> init() async {
-    await Hive.initFlutter();
-    _carBox = await Hive.openBox('car');
-    _maintenanceBox = await Hive.openBox('maintenance');
-    _fuelBox = await Hive.openBox('fuel');
-    _repairBox = await Hive.openBox('repairs');
+    // على الويب (للمعاينة فقط) نستخدم نسخة الويب من SQLite؛ على أندرويد الأصلية
+    if (kIsWeb) databaseFactory = databaseFactoryFfiWeb;
+    final path = '${await getDatabasesPath()}/carcare.db';
+    _db = await openDatabase(
+      path,
+      version: 1,
+      onCreate: (db, v) async {
+        await db.execute('''
+          CREATE TABLE users(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            password TEXT NOT NULL
+          )''');
+        await db.execute('''
+          CREATE TABLE car(
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            odometer INTEGER NOT NULL
+          )''');
+        await db.execute('''
+          CREATE TABLE maintenance(
+            id TEXT PRIMARY KEY,
+            type INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            odometer INTEGER NOT NULL,
+            intervalKm INTEGER NOT NULL,
+            intervalDays INTEGER NOT NULL,
+            cost REAL NOT NULL,
+            notes TEXT
+          )''');
+        await db.execute('''
+          CREATE TABLE fuel(
+            id TEXT PRIMARY KEY,
+            date TEXT NOT NULL,
+            odometer INTEGER NOT NULL,
+            liters REAL NOT NULL,
+            totalPrice REAL NOT NULL
+          )''');
+        await db.execute('''
+          CREATE TABLE repairs(
+            id TEXT PRIMARY KEY,
+            date TEXT NOT NULL,
+            odometer INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            workshop TEXT,
+            cost REAL NOT NULL,
+            notes TEXT
+          )''');
+      },
+    );
+    await _reload();
+  }
+
+  /// إعادة تحميل كل البيانات من قاعدة البيانات (Read)
+  Future<void> _reload() async {
+    final carRows = await _db.query('car', limit: 1);
+    _car = carRows.isEmpty
+        ? Car(name: 'سيارتي', odometer: 0)
+        : Car.fromMap(carRows.first);
+
+    _maintenance =
+        (await _db.query(
+            'maintenance',
+          )).map((e) => MaintenanceRecord.fromMap(e)).toList()
+          ..sort((a, b) => b.date.compareTo(a.date));
+
+    _fuel = (await _db.query('fuel')).map((e) => FuelRecord.fromMap(e)).toList()
+      ..sort((a, b) => b.odometer.compareTo(a.odometer));
+
+    _repairs =
+        (await _db.query(
+            'repairs',
+          )).map((e) => RepairRecord.fromMap(e)).toList()
+          ..sort((a, b) => b.date.compareTo(a.date));
+
+    notifyListeners();
   }
 
   String _newId() => DateTime.now().microsecondsSinceEpoch.toString();
 
-  // ---------------- السيارة ----------------
-  Car get car => _carBox.isEmpty
-      ? Car(name: 'سيارتي', odometer: 0)
-      : Car.fromMap(_carBox.get('car'));
+  // ================= المستخدمون (Auth) =================
+  Future<String?> register(String name, String email, String password) async {
+    final exists = await _db.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: [email.toLowerCase()],
+    );
+    if (exists.isNotEmpty) return 'البريد الإلكتروني مسجّل مسبقاً';
+    // تخزين كلمة المرور مشفّرة (Salted SHA-256) وليس نصاً صريحاً
+    await _db.insert('users', {
+      'name': name,
+      'email': email.toLowerCase(),
+      'password': PasswordHasher.hash(password),
+    });
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> login(String email, String password) async {
+    final rows = await _db.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: [email.toLowerCase()],
+    );
+    if (rows.isEmpty) return null;
+    final ok = PasswordHasher.verify(
+      password,
+      rows.first['password'] as String,
+    );
+    return ok ? rows.first : null;
+  }
+
+  Future<bool> emailExists(String email) async {
+    final rows = await _db.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: [email.toLowerCase()],
+    );
+    return rows.isNotEmpty;
+  }
+
+  Future<void> resetPassword(String email, String newPassword) async {
+    await _db.update(
+      'users',
+      {'password': PasswordHasher.hash(newPassword)},
+      where: 'email = ?',
+      whereArgs: [email.toLowerCase()],
+    );
+  }
+
+  // ================= السيارة =================
+  Car get car => _car;
 
   Future<void> saveCar(Car c) async {
-    await _carBox.put('car', c.toMap());
-    notifyListeners();
+    await _db.insert('car', {
+      'id': 1,
+      ...c.toMap(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    await _reload();
   }
 
   Future<void> updateOdometer(int km) async {
-    final c = car;
-    if (km > c.odometer) {
-      c.odometer = km;
-      await saveCar(c);
+    if (km > _car.odometer) {
+      await saveCar(Car(name: _car.name, odometer: km));
     }
   }
 
-  // ---------------- الصيانة ----------------
-  List<MaintenanceRecord> get maintenance {
-    final list = _maintenanceBox.values
-        .map((e) => MaintenanceRecord.fromMap(e))
-        .toList();
-    list.sort((a, b) => b.date.compareTo(a.date)); // الأحدث أولاً
-    return list;
-  }
+  // ================= الصيانة (CRUD) =================
+  List<MaintenanceRecord> get maintenance => _maintenance;
 
   List<MaintenanceRecord> maintenanceOf(MaintenanceType t) =>
-      maintenance.where((m) => m.type == t).toList();
+      _maintenance.where((m) => m.type == t).toList();
 
-  /// آخر صيانة من نوع معين
   MaintenanceRecord? lastOf(MaintenanceType t) {
     final l = maintenanceOf(t);
     return l.isEmpty ? null : l.first;
@@ -64,21 +182,30 @@ class StorageService extends ChangeNotifier {
 
   Future<void> addMaintenance(MaintenanceRecord r) async {
     r.id = r.id.isEmpty ? _newId() : r.id;
-    await _maintenanceBox.put(r.id, r.toMap());
+    await _db.insert('maintenance', r.toMap());
     await updateOdometer(r.odometer);
-    notifyListeners();
+    await _reload();
+  }
+
+  Future<void> updateMaintenance(MaintenanceRecord r) async {
+    await _db.update(
+      'maintenance',
+      r.toMap(),
+      where: 'id = ?',
+      whereArgs: [r.id],
+    );
+    await _reload();
   }
 
   Future<void> deleteMaintenance(String id) async {
-    await _maintenanceBox.delete(id);
-    notifyListeners();
+    await _db.delete('maintenance', where: 'id = ?', whereArgs: [id]);
+    await _reload();
   }
 
-  /// حساب حالة عنصر الصيانة بناءً على العداد الحالي والتاريخ
   HealthStatus statusOf(MaintenanceType t) {
     final last = lastOf(t);
     if (last == null) return HealthStatus.none;
-    final kmLeft = last.nextKm - car.odometer;
+    final kmLeft = last.nextKm - _car.odometer;
     final daysLeft = last.nextDate.difference(DateTime.now()).inDays;
     if (kmLeft <= 0 || daysLeft <= 0) return HealthStatus.overdue;
     if (kmLeft <= last.intervalKm * 0.2 || daysLeft <= 30) {
@@ -87,76 +214,72 @@ class StorageService extends ChangeNotifier {
     return HealthStatus.good;
   }
 
-  /// نسبة التقدم (0 = جديد، 1 = مستحق)
   double progressOf(MaintenanceType t) {
     final last = lastOf(t);
     if (last == null) return 0;
-    final used = car.odometer - last.odometer;
+    final used = _car.odometer - last.odometer;
     return (used / last.intervalKm).clamp(0.0, 1.0);
   }
 
-  // ---------------- الوقود ----------------
-  List<FuelRecord> get fuel {
-    final list = _fuelBox.values.map((e) => FuelRecord.fromMap(e)).toList();
-    list.sort((a, b) => b.odometer.compareTo(a.odometer));
-    return list;
-  }
+  // ================= الوقود (CRUD) =================
+  List<FuelRecord> get fuel => _fuel;
 
   Future<void> addFuel(FuelRecord r) async {
     r.id = r.id.isEmpty ? _newId() : r.id;
-    await _fuelBox.put(r.id, r.toMap());
+    await _db.insert('fuel', r.toMap());
     await updateOdometer(r.odometer);
-    notifyListeners();
+    await _reload();
+  }
+
+  Future<void> updateFuel(FuelRecord r) async {
+    await _db.update('fuel', r.toMap(), where: 'id = ?', whereArgs: [r.id]);
+    await _reload();
   }
 
   Future<void> deleteFuel(String id) async {
-    await _fuelBox.delete(id);
-    notifyListeners();
+    await _db.delete('fuel', where: 'id = ?', whereArgs: [id]);
+    await _reload();
   }
 
-  /// متوسط الاستهلاك كم/لتر (يحتاج تعبئتين على الأقل)
   double get avgKmPerLiter {
-    final f = fuel;
-    if (f.length < 2) return 0;
-    final distance = f.first.odometer - f.last.odometer;
-    // نحسب اللترات من كل التعبئات ما عدا الأولى (الأقدم)
+    if (_fuel.length < 2) return 0;
+    final distance = _fuel.first.odometer - _fuel.last.odometer;
     double liters = 0;
-    for (int i = 0; i < f.length - 1; i++) {
-      liters += f[i].liters;
+    for (int i = 0; i < _fuel.length - 1; i++) {
+      liters += _fuel[i].liters;
     }
     return liters > 0 ? distance / liters : 0;
   }
 
-  double get totalFuelCost => fuel.fold(0, (s, r) => s + r.totalPrice);
+  double get totalFuelCost => _fuel.fold(0, (s, r) => s + r.totalPrice);
 
   double get thisMonthFuelCost {
     final now = DateTime.now();
-    return fuel
+    return _fuel
         .where((r) => r.date.year == now.year && r.date.month == now.month)
         .fold(0, (s, r) => s + r.totalPrice);
   }
 
-  // ---------------- الإصلاحات ----------------
-  List<RepairRecord> get repairs {
-    final list =
-        _repairBox.values.map((e) => RepairRecord.fromMap(e)).toList();
-    list.sort((a, b) => b.date.compareTo(a.date));
-    return list;
-  }
+  // ================= الإصلاحات (CRUD) =================
+  List<RepairRecord> get repairs => _repairs;
 
   Future<void> addRepair(RepairRecord r) async {
     r.id = r.id.isEmpty ? _newId() : r.id;
-    await _repairBox.put(r.id, r.toMap());
+    await _db.insert('repairs', r.toMap());
     await updateOdometer(r.odometer);
-    notifyListeners();
+    await _reload();
+  }
+
+  Future<void> updateRepair(RepairRecord r) async {
+    await _db.update('repairs', r.toMap(), where: 'id = ?', whereArgs: [r.id]);
+    await _reload();
   }
 
   Future<void> deleteRepair(String id) async {
-    await _repairBox.delete(id);
-    notifyListeners();
+    await _db.delete('repairs', where: 'id = ?', whereArgs: [id]);
+    await _reload();
   }
 
-  double get totalRepairCost => repairs.fold(0, (s, r) => s + r.cost);
-
-  double get totalMaintenanceCost => maintenance.fold(0, (s, r) => s + r.cost);
+  double get totalRepairCost => _repairs.fold(0, (s, r) => s + r.cost);
+  double get totalMaintenanceCost => _maintenance.fold(0, (s, r) => s + r.cost);
 }

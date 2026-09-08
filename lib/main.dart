@@ -8,11 +8,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'screens/auth/login_screen.dart';
 import 'screens/fuel_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/license_screen.dart';
 import 'screens/maintenance_screen.dart';
 import 'screens/repairs_screen.dart';
+import 'services/auth_service.dart';
 import 'services/license_service.dart';
 import 'services/storage_service.dart';
 import 'theme.dart';
@@ -56,6 +58,7 @@ class _Gate extends StatefulWidget {
 
 class _GateState extends State<_Gate> {
   LicenseState? _state;
+  bool _loggedIn = false;
 
   @override
   void initState() {
@@ -65,7 +68,13 @@ class _GateState extends State<_Gate> {
 
   Future<void> _check() async {
     final st = await LicenseService.check();
-    if (mounted) setState(() => _state = st);
+    final logged = await AuthService.isLoggedIn();
+    if (mounted) {
+      setState(() {
+        _state = st;
+        _loggedIn = logged;
+      });
+    }
   }
 
   @override
@@ -78,8 +87,10 @@ class _GateState extends State<_Gate> {
             children: [
               Icon(Icons.directions_car, size: 72, color: AppColors.orange),
               SizedBox(height: 16),
-              Text('CarCare',
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+              Text(
+                'CarCare',
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+              ),
               SizedBox(height: 24),
               CircularProgressIndicator(color: AppColors.orange),
             ],
@@ -90,17 +101,20 @@ class _GateState extends State<_Gate> {
     if (!_state!.allowed) {
       return LicenseScreen(
         message: _state!.message,
-        onActivated: () =>
-            setState(() => _state = LicenseState(allowed: true)),
+        onActivated: () => setState(() => _state = LicenseState(allowed: true)),
       );
     }
-    return const MainShell();
+    if (!_loggedIn) {
+      return LoginScreen(onLoggedIn: () => setState(() => _loggedIn = true));
+    }
+    return MainShell(onLogout: () => setState(() => _loggedIn = false));
   }
 }
 
 /// الهيكل الرئيسي مع شريط التنقل السفلي
 class MainShell extends StatefulWidget {
-  const MainShell({super.key});
+  final VoidCallback onLogout;
+  const MainShell({super.key, required this.onLogout});
   @override
   State<MainShell> createState() => _MainShellState();
 }
@@ -111,7 +125,10 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      HomeScreen(onNavigate: (i) => setState(() => _index = i)),
+      HomeScreen(
+        onNavigate: (i) => setState(() => _index = i),
+        onLogout: widget.onLogout,
+      ),
       const MaintenanceScreen(),
       const FuelScreen(),
       const RepairsScreen(),
@@ -123,21 +140,25 @@ class _MainShellState extends State<MainShell> {
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: const [
           NavigationDestination(
-              icon: Icon(Icons.dashboard_outlined),
-              selectedIcon: Icon(Icons.dashboard),
-              label: 'الرئيسية'),
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
+            label: 'الرئيسية',
+          ),
           NavigationDestination(
-              icon: Icon(Icons.build_outlined),
-              selectedIcon: Icon(Icons.build),
-              label: 'الصيانة'),
+            icon: Icon(Icons.build_outlined),
+            selectedIcon: Icon(Icons.build),
+            label: 'الصيانة',
+          ),
           NavigationDestination(
-              icon: Icon(Icons.local_gas_station_outlined),
-              selectedIcon: Icon(Icons.local_gas_station),
-              label: 'الوقود'),
+            icon: Icon(Icons.local_gas_station_outlined),
+            selectedIcon: Icon(Icons.local_gas_station),
+            label: 'الوقود',
+          ),
           NavigationDestination(
-              icon: Icon(Icons.history_outlined),
-              selectedIcon: Icon(Icons.history),
-              label: 'الإصلاحات'),
+            icon: Icon(Icons.history_outlined),
+            selectedIcon: Icon(Icons.history),
+            label: 'الإصلاحات',
+          ),
         ],
       ),
     );

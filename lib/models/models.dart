@@ -91,26 +91,26 @@ class MaintenanceRecord {
   DateTime get nextDate => date.add(Duration(days: intervalDays));
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'type': type.index,
-        'date': date.toIso8601String(),
-        'odometer': odometer,
-        'intervalKm': intervalKm,
-        'intervalDays': intervalDays,
-        'cost': cost,
-        'notes': notes,
-      };
+    'id': id,
+    'type': type.index,
+    'date': date.toIso8601String(),
+    'odometer': odometer,
+    'intervalKm': intervalKm,
+    'intervalDays': intervalDays,
+    'cost': cost,
+    'notes': notes,
+  };
 
   factory MaintenanceRecord.fromMap(Map map) => MaintenanceRecord(
-        id: map['id'],
-        type: MaintenanceType.values[map['type'] ?? 0],
-        date: DateTime.parse(map['date']),
-        odometer: map['odometer'] ?? 0,
-        intervalKm: map['intervalKm'] ?? 5000,
-        intervalDays: map['intervalDays'] ?? 180,
-        cost: (map['cost'] ?? 0).toDouble(),
-        notes: map['notes'] ?? '',
-      );
+    id: map['id'],
+    type: MaintenanceType.values[map['type'] ?? 0],
+    date: DateTime.parse(map['date']),
+    odometer: map['odometer'] ?? 0,
+    intervalKm: map['intervalKm'] ?? 5000,
+    intervalDays: map['intervalDays'] ?? 180,
+    cost: (map['cost'] ?? 0).toDouble(),
+    notes: map['notes'] ?? '',
+  );
 }
 
 /// سجل تعبئة وقود
@@ -132,20 +132,20 @@ class FuelRecord {
   double get pricePerLiter => liters > 0 ? totalPrice / liters : 0;
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'date': date.toIso8601String(),
-        'odometer': odometer,
-        'liters': liters,
-        'totalPrice': totalPrice,
-      };
+    'id': id,
+    'date': date.toIso8601String(),
+    'odometer': odometer,
+    'liters': liters,
+    'totalPrice': totalPrice,
+  };
 
   factory FuelRecord.fromMap(Map map) => FuelRecord(
-        id: map['id'],
-        date: DateTime.parse(map['date']),
-        odometer: map['odometer'] ?? 0,
-        liters: (map['liters'] ?? 0).toDouble(),
-        totalPrice: (map['totalPrice'] ?? 0).toDouble(),
-      );
+    id: map['id'],
+    date: DateTime.parse(map['date']),
+    odometer: map['odometer'] ?? 0,
+    liters: (map['liters'] ?? 0).toDouble(),
+    totalPrice: (map['totalPrice'] ?? 0).toDouble(),
+  );
 }
 
 /// سجل إصلاح
@@ -169,24 +169,24 @@ class RepairRecord {
   });
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'date': date.toIso8601String(),
-        'odometer': odometer,
-        'title': title,
-        'workshop': workshop,
-        'cost': cost,
-        'notes': notes,
-      };
+    'id': id,
+    'date': date.toIso8601String(),
+    'odometer': odometer,
+    'title': title,
+    'workshop': workshop,
+    'cost': cost,
+    'notes': notes,
+  };
 
   factory RepairRecord.fromMap(Map map) => RepairRecord(
-        id: map['id'],
-        date: DateTime.parse(map['date']),
-        odometer: map['odometer'] ?? 0,
-        title: map['title'] ?? '',
-        workshop: map['workshop'] ?? '',
-        cost: (map['cost'] ?? 0).toDouble(),
-        notes: map['notes'] ?? '',
-      );
+    id: map['id'],
+    date: DateTime.parse(map['date']),
+    odometer: map['odometer'] ?? 0,
+    title: map['title'] ?? '',
+    workshop: map['workshop'] ?? '',
+    cost: (map['cost'] ?? 0).toDouble(),
+    notes: map['notes'] ?? '',
+  );
 }
 
 /// حالة عنصر الصيانة (جيد / قريب / متأخر)

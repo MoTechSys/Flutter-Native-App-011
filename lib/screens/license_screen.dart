@@ -9,8 +9,11 @@ import '../theme.dart';
 class LicenseScreen extends StatefulWidget {
   final String message;
   final VoidCallback onActivated;
-  const LicenseScreen(
-      {super.key, required this.message, required this.onActivated});
+  const LicenseScreen({
+    super.key,
+    required this.message,
+    required this.onActivated,
+  });
 
   @override
   State<LicenseScreen> createState() => _LicenseScreenState();
@@ -54,13 +57,17 @@ class _LicenseScreenState extends State<LicenseScreen> {
                     color: AppColors.orange.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.lock_outline,
-                      size: 64, color: AppColors.orange),
+                  child: const Icon(
+                    Icons.lock_outline,
+                    size: 64,
+                    color: AppColors.orange,
+                  ),
                 ),
                 const SizedBox(height: 24),
-                const Text('النسخة تحتاج تفعيل',
-                    style:
-                        TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                const Text(
+                  'النسخة تحتاج تفعيل',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 10),
                 Text(
                   widget.message.isNotEmpty
@@ -89,7 +96,10 @@ class _LicenseScreenState extends State<LicenseScreen> {
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Icon(Icons.check),
                   label: const Text('تفعيل'),
                 ),

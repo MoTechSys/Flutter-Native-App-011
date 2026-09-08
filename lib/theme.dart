@@ -48,11 +48,13 @@ ThemeData buildTheme() {
       labelTextStyle: WidgetStateProperty.all(
         const TextStyle(fontSize: 12, color: Colors.white),
       ),
-      iconTheme: WidgetStateProperty.resolveWith((states) => IconThemeData(
-            color: states.contains(WidgetState.selected)
-                ? AppColors.orange
-                : AppColors.textDim,
-          )),
+      iconTheme: WidgetStateProperty.resolveWith(
+        (states) => IconThemeData(
+          color: states.contains(WidgetState.selected)
+              ? AppColors.orange
+              : AppColors.textDim,
+        ),
+      ),
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: AppColors.orange,
@@ -72,9 +74,7 @@ ThemeData buildTheme() {
         backgroundColor: AppColors.orange,
         foregroundColor: Colors.white,
         minimumSize: const Size.fromHeight(50),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     ),
     tabBarTheme: const TabBarThemeData(

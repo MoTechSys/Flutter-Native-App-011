@@ -33,7 +33,8 @@ class LicenseService {
     // 2) نحاول قراءة ملف التحكم عن بُعد
     try {
       final uri = Uri.parse(
-          '$_remoteUrl?t=${DateTime.now().millisecondsSinceEpoch}');
+        '$_remoteUrl?t=${DateTime.now().millisecondsSinceEpoch}',
+      );
       final res = await http.get(uri).timeout(const Duration(seconds: 6));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as Map<String, dynamic>;
@@ -57,8 +58,9 @@ class LicenseService {
 
   /// محاولة التفعيل بالكود
   static Future<bool> activate(String code) async {
-    final hash =
-        sha256.convert(utf8.encode(code.trim().toUpperCase())).toString();
+    final hash = sha256
+        .convert(utf8.encode(code.trim().toUpperCase()))
+        .toString();
     if (hash == _activationHash) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_kActivated, true);

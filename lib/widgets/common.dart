@@ -93,10 +93,7 @@ class GradientCard extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
-            colors: [
-              color.withValues(alpha: 0.35),
-              AppColors.card,
-            ],
+            colors: [color.withValues(alpha: 0.35), AppColors.card],
           ),
           border: Border.all(color: color.withValues(alpha: 0.4)),
         ),
@@ -160,12 +157,55 @@ class EmptyState extends StatelessWidget {
         children: [
           Icon(icon, size: 70, color: AppColors.textDim),
           const SizedBox(height: 12),
-          Text(text,
-              style: const TextStyle(color: AppColors.textDim, fontSize: 16)),
+          Text(
+            text,
+            style: const TextStyle(color: AppColors.textDim, fontSize: 16),
+          ),
         ],
       ),
     );
   }
+}
+
+/// رسالة SnackBar (نجاح / خطأ)
+void showSnack(BuildContext context, String msg, {bool error = false}) {
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              error ? Icons.error_outline : Icons.check_circle_outline,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: Text(msg)),
+          ],
+        ),
+        backgroundColor: error ? AppColors.red : AppColors.green,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+}
+
+/// التحقق من البريد الإلكتروني
+String? validateEmail(String? v) {
+  final s = (v ?? '').trim();
+  if (s.isEmpty) return 'أدخل البريد الإلكتروني';
+  if (!RegExp(r'^[\w\.\-]+@[\w\-]+\.[a-zA-Z]{2,}$').hasMatch(s)) {
+    return 'صيغة البريد غير صحيحة (مثال: name@mail.com)';
+  }
+  return null;
+}
+
+/// التحقق من كلمة المرور
+String? validatePassword(String? v) {
+  final s = v ?? '';
+  if (s.isEmpty) return 'أدخل كلمة المرور';
+  if (s.length < 6) return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+  return null;
 }
 
 /// تأكيد الحذف
@@ -178,11 +218,13 @@ Future<bool> confirmDelete(BuildContext context) async {
       content: const Text('هل أنت متأكد من حذف هذا السجل؟'),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء')),
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('إلغاء'),
+        ),
         TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('حذف', style: TextStyle(color: AppColors.red))),
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('حذف', style: TextStyle(color: AppColors.red)),
+        ),
       ],
     ),
   );

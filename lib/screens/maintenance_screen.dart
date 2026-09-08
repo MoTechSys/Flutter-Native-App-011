@@ -7,6 +7,7 @@ import '../models/models.dart';
 import '../services/storage_service.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import 'record_details_screen.dart';
 
 class MaintenanceScreen extends StatefulWidget {
   const MaintenanceScreen({super.key});
@@ -47,8 +48,8 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showAddMaintenance(
-            context, MaintenanceType.values[_tab.index]),
+        onPressed: () =>
+            showAddMaintenance(context, MaintenanceType.values[_tab.index]),
         icon: const Icon(Icons.add),
         label: const Text('إضافة'),
       ),
@@ -78,31 +79,41 @@ class _TypeTab extends StatelessWidget {
               child: Row(
                 children: [
                   ProgressRing(
-                      progress: s.progressOf(type),
-                      color: color,
-                      icon: typeIcon(type),
-                      size: 70),
+                    progress: s.progressOf(type),
+                    color: color,
+                    icon: typeIcon(type),
+                    size: 70,
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: last == null
-                        ? const Text('لا يوجد سجل بعد.\nأضف أول صيانة للبدء.',
-                            style: TextStyle(color: AppColors.textDim))
+                        ? const Text(
+                            'لا يوجد سجل بعد.\nأضف أول صيانة للبدء.',
+                            style: TextStyle(color: AppColors.textDim),
+                          )
                         : Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                  'الحالة: ${statusLabel(s.statusOf(type))}',
-                                  style: TextStyle(
-                                      color: statusColor(s.statusOf(type)),
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16)),
+                                'الحالة: ${statusLabel(s.statusOf(type))}',
+                                style: TextStyle(
+                                  color: statusColor(s.statusOf(type)),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
                               const SizedBox(height: 6),
-                              Text('آخر مرة: ${fmtDate(last.date)} عند ${fmtNum(last.odometer)} كم',
-                                  style: const TextStyle(fontSize: 13)),
-                              Text('القادمة: ${fmtNum(last.nextKm)} كم أو ${fmtDate(last.nextDate)}',
-                                  style: const TextStyle(
-                                      fontSize: 13,
-                                      color: AppColors.textDim)),
+                              Text(
+                                'آخر مرة: ${fmtDate(last.date)} عند ${fmtNum(last.odometer)} كم',
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                              Text(
+                                'القادمة: ${fmtNum(last.nextKm)} كم أو ${fmtDate(last.nextDate)}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textDim,
+                                ),
+                              ),
                             ],
                           ),
                   ),
@@ -110,55 +121,108 @@ class _TypeTab extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            Text('السجل (${list.length})',
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(
+              'السجل (${list.length})',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const SizedBox(height: 10),
             if (list.isEmpty)
               const SizedBox(
-                  height: 200,
-                  child: EmptyState(
-                      icon: Icons.history, text: 'لا توجد سجلات')),
-            ...list.map((r) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Card(
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: color.withValues(alpha: 0.2),
-                        child: Icon(typeIcon(type), color: color, size: 20),
-                      ),
-                      title: Text(
-                          '${fmtDate(r.date)} • ${fmtNum(r.odometer)} كم'),
-                      subtitle: Text(
-                        [
-                          'كل ${fmtNum(r.intervalKm)} كم / ${r.intervalDays} يوم',
-                          if (r.notes.isNotEmpty) r.notes,
-                        ].join('\n'),
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      isThreeLine: r.notes.isNotEmpty,
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(fmtMoney(r.cost),
-                              style: const TextStyle(
-                                  color: AppColors.teal,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13)),
-                          InkWell(
-                            onTap: () async {
-                              if (await confirmDelete(context)) {
-                                s.deleteMaintenance(r.id);
-                              }
-                            },
-                            child: const Icon(Icons.delete_outline,
-                                color: AppColors.red, size: 20),
-                          ),
-                        ],
+                height: 200,
+                child: EmptyState(icon: Icons.history, text: 'لا توجد سجلات'),
+              ),
+            ...list.map(
+              (r) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Card(
+                  child: ListTile(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RecordDetailsScreen(
+                          title: type.label,
+                          color: color,
+                          icon: typeIcon(type),
+                          fields: {
+                            'التاريخ': fmtDate(r.date),
+                            'قراءة العداد': '${fmtNum(r.odometer)} كم',
+                            'تتكرر كل':
+                                '${fmtNum(r.intervalKm)} كم / ${r.intervalDays} يوم',
+                            'الصيانة القادمة':
+                                '${fmtNum(r.nextKm)} كم أو ${fmtDate(r.nextDate)}',
+                            'التكلفة': fmtMoney(r.cost),
+                            'ملاحظات': r.notes.isEmpty ? '—' : r.notes,
+                          },
+                          onEdit: () =>
+                              showAddMaintenance(context, type, existing: r),
+                          onDelete: () => s.deleteMaintenance(r.id),
+                        ),
                       ),
                     ),
+                    leading: CircleAvatar(
+                      backgroundColor: color.withValues(alpha: 0.2),
+                      child: Icon(typeIcon(type), color: color, size: 20),
+                    ),
+                    title: Text(
+                      '${fmtDate(r.date)} • ${fmtNum(r.odometer)} كم',
+                    ),
+                    subtitle: Text(
+                      [
+                        'كل ${fmtNum(r.intervalKm)} كم / ${r.intervalDays} يوم',
+                        if (r.notes.isNotEmpty) r.notes,
+                      ].join('\n'),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    isThreeLine: r.notes.isNotEmpty,
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          fmtMoney(r.cost),
+                          style: const TextStyle(
+                            color: AppColors.teal,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            InkWell(
+                              onTap: () => showAddMaintenance(
+                                context,
+                                type,
+                                existing: r,
+                              ),
+                              child: const Icon(
+                                Icons.edit_outlined,
+                                color: AppColors.teal,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            InkWell(
+                              onTap: () async {
+                                if (await confirmDelete(context)) {
+                                  await s.deleteMaintenance(r.id);
+                                  if (context.mounted) {
+                                    showSnack(context, 'تم حذف السجل');
+                                  }
+                                }
+                              },
+                              child: const Icon(
+                                Icons.delete_outline,
+                                color: AppColors.red,
+                                size: 20,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                )),
+                ),
+              ),
+            ),
           ],
         );
       },
@@ -168,17 +232,27 @@ class _TypeTab extends StatelessWidget {
 
 /// نموذج إضافة صيانة (Bottom Sheet)
 Future<void> showAddMaintenance(
-    BuildContext context, MaintenanceType initial) async {
+  BuildContext context,
+  MaintenanceType initial, {
+  MaintenanceRecord? existing,
+}) async {
   final s = StorageService.instance;
-  var type = initial;
-  var date = DateTime.now();
-  final kmCtl = TextEditingController(text: s.car.odometer.toString());
-  final intKmCtl =
-      TextEditingController(text: initial.defaultIntervalKm.toString());
-  final intDaysCtl =
-      TextEditingController(text: initial.defaultIntervalDays.toString());
-  final costCtl = TextEditingController();
-  final notesCtl = TextEditingController();
+  final isEdit = existing != null;
+  var type = existing?.type ?? initial;
+  var date = existing?.date ?? DateTime.now();
+  final kmCtl = TextEditingController(
+    text: (existing?.odometer ?? s.car.odometer).toString(),
+  );
+  final intKmCtl = TextEditingController(
+    text: (existing?.intervalKm ?? initial.defaultIntervalKm).toString(),
+  );
+  final intDaysCtl = TextEditingController(
+    text: (existing?.intervalDays ?? initial.defaultIntervalDays).toString(),
+  );
+  final costCtl = TextEditingController(
+    text: existing == null ? '' : existing.cost.toString(),
+  );
+  final notesCtl = TextEditingController(text: existing?.notes ?? '');
   final formKey = GlobalKey<FormState>();
 
   await showModalBottomSheet(
@@ -186,33 +260,47 @@ Future<void> showAddMaintenance(
     isScrollControlled: true,
     backgroundColor: AppColors.card,
     shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, setState) => Padding(
         padding: EdgeInsets.fromLTRB(
-            20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+          20,
+          20,
+          20,
+          MediaQuery.of(ctx).viewInsets.bottom + 20,
+        ),
         child: Form(
           key: formKey,
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('إضافة سجل صيانة',
-                    style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  isEdit ? 'تعديل سجل صيانة' : 'إضافة سجل صيانة',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<MaintenanceType>(
                   initialValue: type,
                   dropdownColor: AppColors.cardLight,
                   decoration: const InputDecoration(labelText: 'النوع'),
                   items: MaintenanceType.values
-                      .map((t) => DropdownMenuItem(
+                      .map(
+                        (t) => DropdownMenuItem(
                           value: t,
-                          child: Row(children: [
-                            Icon(typeIcon(t), color: typeColor(t), size: 18),
-                            const SizedBox(width: 8),
-                            Text(t.label),
-                          ])))
+                          child: Row(
+                            children: [
+                              Icon(typeIcon(t), color: typeColor(t), size: 18),
+                              const SizedBox(width: 8),
+                              Text(t.label),
+                            ],
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (v) {
                     if (v == null) return;
@@ -225,40 +313,48 @@ Future<void> showAddMaintenance(
                 ),
                 const SizedBox(height: 12),
                 DateField(
-                    value: date, onChanged: (d) => setState(() => date = d)),
+                  value: date,
+                  onChanged: (d) => setState(() => date = d),
+                ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: kmCtl,
                   keyboardType: TextInputType.number,
-                  decoration:
-                      const InputDecoration(labelText: 'قراءة العداد (كم)'),
-                  validator: (v) =>
-                      int.tryParse(v ?? '') == null ? 'أدخل رقماً صحيحاً' : null,
+                  decoration: const InputDecoration(
+                    labelText: 'قراءة العداد (كم)',
+                  ),
+                  validator: (v) => int.tryParse(v ?? '') == null
+                      ? 'أدخل رقماً صحيحاً'
+                      : null,
                 ),
                 const SizedBox(height: 12),
-                Row(children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: intKmCtl,
-                      keyboardType: TextInputType.number,
-                      decoration:
-                          const InputDecoration(labelText: 'تتكرر كل (كم)'),
-                      validator: (v) =>
-                          int.tryParse(v ?? '') == null ? 'رقم' : null,
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: intKmCtl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'تتكرر كل (كم)',
+                        ),
+                        validator: (v) =>
+                            int.tryParse(v ?? '') == null ? 'رقم' : null,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: intDaysCtl,
-                      keyboardType: TextInputType.number,
-                      decoration:
-                          const InputDecoration(labelText: 'تتكرر كل (يوم)'),
-                      validator: (v) =>
-                          int.tryParse(v ?? '') == null ? 'رقم' : null,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: intDaysCtl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'تتكرر كل (يوم)',
+                        ),
+                        validator: (v) =>
+                            int.tryParse(v ?? '') == null ? 'رقم' : null,
+                      ),
                     ),
-                  ),
-                ]),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: costCtl,
@@ -276,8 +372,8 @@ Future<void> showAddMaintenance(
                   label: const Text('حفظ'),
                   onPressed: () async {
                     if (!formKey.currentState!.validate()) return;
-                    await s.addMaintenance(MaintenanceRecord(
-                      id: '',
+                    final rec = MaintenanceRecord(
+                      id: existing?.id ?? '',
                       type: type,
                       date: date,
                       odometer: int.parse(kmCtl.text),
@@ -285,8 +381,19 @@ Future<void> showAddMaintenance(
                       intervalDays: int.parse(intDaysCtl.text),
                       cost: double.tryParse(costCtl.text) ?? 0,
                       notes: notesCtl.text.trim(),
-                    ));
+                    );
+                    if (isEdit) {
+                      await s.updateMaintenance(rec);
+                    } else {
+                      await s.addMaintenance(rec);
+                    }
                     if (ctx.mounted) Navigator.pop(ctx);
+                    if (context.mounted) {
+                      showSnack(
+                        context,
+                        isEdit ? 'تم تعديل السجل بنجاح' : 'تمت الإضافة بنجاح',
+                      );
+                    }
                   },
                 ),
               ],
