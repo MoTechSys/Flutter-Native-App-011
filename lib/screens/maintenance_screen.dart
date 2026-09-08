@@ -135,7 +135,8 @@ class _TypeTab extends StatelessWidget {
               (r) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Card(
-                  child: ListTile(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(18),
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -159,65 +160,100 @@ class _TypeTab extends StatelessWidget {
                         ),
                       ),
                     ),
-                    leading: CircleAvatar(
-                      backgroundColor: color.withValues(alpha: 0.2),
-                      child: Icon(typeIcon(type), color: color, size: 20),
-                    ),
-                    title: Text(
-                      '${fmtDate(r.date)} • ${fmtNum(r.odometer)} كم',
-                    ),
-                    subtitle: Text(
-                      [
-                        'كل ${fmtNum(r.intervalKm)} كم / ${r.intervalDays} يوم',
-                        if (r.notes.isNotEmpty) r.notes,
-                      ].join('\n'),
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    isThreeLine: r.notes.isNotEmpty,
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          fmtMoney(r.cost),
-                          style: const TextStyle(
-                            color: AppColors.teal,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: color.withValues(alpha: 0.2),
+                            child: Icon(typeIcon(type), color: color, size: 20),
                           ),
-                        ),
-                        Row(
-                          children: [
-                            InkWell(
-                              onTap: () => showAddMaintenance(
-                                context,
-                                type,
-                                existing: r,
-                              ),
-                              child: const Icon(
-                                Icons.edit_outlined,
-                                color: AppColors.teal,
-                                size: 20,
-                              ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${fmtDate(r.date)} • ${fmtNum(r.odometer)} كم',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'كل ${fmtNum(r.intervalKm)} كم / ${r.intervalDays} يوم',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textDim,
+                                  ),
+                                ),
+                                if (r.notes.isNotEmpty)
+                                  Text(
+                                    r.notes,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                              ],
                             ),
-                            const SizedBox(width: 10),
-                            InkWell(
-                              onTap: () async {
-                                if (await confirmDelete(context)) {
-                                  await s.deleteMaintenance(r.id);
-                                  if (context.mounted) {
-                                    showSnack(context, 'تم حذف السجل');
-                                  }
-                                }
-                              },
-                              child: const Icon(
-                                Icons.delete_outline,
-                                color: AppColors.red,
-                                size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                fmtMoney(r.cost),
+                                style: const TextStyle(
+                                  color: AppColors.teal,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    tooltip: 'تعديل',
+                                    onPressed: () => showAddMaintenance(
+                                      context,
+                                      type,
+                                      existing: r,
+                                    ),
+                                    icon: const Icon(
+                                      Icons.edit_outlined,
+                                      color: AppColors.teal,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  IconButton(
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    tooltip: 'حذف',
+                                    onPressed: () async {
+                                      if (await confirmDelete(context)) {
+                                        await s.deleteMaintenance(r.id);
+                                        if (context.mounted) {
+                                          showSnack(context, 'تم حذف السجل');
+                                        }
+                                      }
+                                    },
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      color: AppColors.red,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

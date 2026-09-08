@@ -83,7 +83,7 @@ class HomeScreen extends StatelessWidget {
                   physics: const NeverScrollableScrollPhysics(),
                   mainAxisSpacing: 12,
                   crossAxisSpacing: 12,
-                  childAspectRatio: 1.05,
+                  childAspectRatio: 0.92,
                   children: [
                     for (final t in MaintenanceType.values)
                       _StatusCard(type: t, onTap: () => onNavigate(1)),
@@ -335,11 +335,15 @@ class _StatusCard extends StatelessWidget {
           const Spacer(),
           Text(
             type.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
           ),
           const SizedBox(height: 2),
           Text(
             sub,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(color: AppColors.textDim, fontSize: 12),
           ),
         ],

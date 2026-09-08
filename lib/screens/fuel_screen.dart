@@ -122,17 +122,29 @@ class FuelScreen extends StatelessWidget {
                             size: 20,
                           ),
                         ),
+                        contentPadding: const EdgeInsetsDirectional.only(
+                          start: 12,
+                          end: 4,
+                        ),
                         title: Text(
                           '${r.liters.toStringAsFixed(1)} لتر • ${fmtMoney(r.totalPrice)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                          '${fmtDate(r.date)} • ${fmtNum(r.odometer)} كم • ${r.pricePerLiter.toStringAsFixed(2)} ر.س/لتر',
-                          style: const TextStyle(fontSize: 12),
+                          '${fmtDate(r.date)} • ${fmtNum(r.odometer)} كم\n${r.pricePerLiter.toStringAsFixed(2)} ر.س/لتر',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textDim,
+                          ),
                         ),
+                        isThreeLine: true,
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
+                              visualDensity: VisualDensity.compact,
                               icon: const Icon(
                                 Icons.edit_outlined,
                                 color: AppColors.teal,
@@ -140,6 +152,7 @@ class FuelScreen extends StatelessWidget {
                               onPressed: () => _showAdd(context, existing: r),
                             ),
                             IconButton(
+                              visualDensity: VisualDensity.compact,
                               icon: const Icon(
                                 Icons.delete_outline,
                                 color: AppColors.red,

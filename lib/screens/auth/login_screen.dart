@@ -131,8 +131,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     label: Text(_busy ? 'جارٍ الدخول...' : 'تسجيل الدخول'),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       const Text(
                         'ليس لديك حساب؟',

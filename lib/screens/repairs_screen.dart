@@ -42,6 +42,8 @@ class RepairsScreen extends StatelessWidget {
                             children: [
                               Text(
                                 fmtMoney(s.totalRepairCost),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w900,
@@ -290,27 +292,33 @@ class _TimelineItem extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Text(
+                          record.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
                         Row(
                           children: [
                             Expanded(
                               child: Text(
-                                record.title,
+                                fmtMoney(record.cost),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
+                                  color: AppColors.teal,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 15,
                                 ),
-                              ),
-                            ),
-                            Text(
-                              fmtMoney(record.cost),
-                              style: const TextStyle(
-                                color: AppColors.teal,
-                                fontWeight: FontWeight.bold,
                               ),
                             ),
                             IconButton(
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
+                              tooltip: 'تعديل',
                               icon: const Icon(
                                 Icons.edit_outlined,
                                 color: AppColors.teal,
@@ -318,10 +326,11 @@ class _TimelineItem extends StatelessWidget {
                               ),
                               onPressed: onEdit,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 14),
                             IconButton(
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
+                              tooltip: 'حذف',
                               icon: const Icon(
                                 Icons.delete_outline,
                                 color: AppColors.red,
