@@ -2,6 +2,7 @@
 // خدمة الترخيص - ملف التحكم عن بُعد هو المرجع دائماً
 //   { "active": true|false, "code": "XXXX", "message": "..." }
 // - active=false  => يُقفل التطبيق عند كل تشغيل (لا يوجد تفعيل دائم)
+// - الملف/المستودع محذوف (404) => يُقفل أيضاً
 // - code          => كود مؤقت يفتح الجلسة الحالية فقط، ويُقارن بالملف
 //                    (يمكن تغييره/حذفه من GitHub في أي وقت)
 // ============================================================
@@ -36,8 +37,14 @@ class LicenseService {
         await prefs.setString(_kCode, code);
         return LicenseState(allowed: active, message: msg);
       }
+      // الملف أو المستودع محذوف (404 أو أي رد غير 200) => لا ترخيص => قفل
+      const msg = 'انتهى ترخيص هذه النسخة. يرجى التواصل مع المطوّر.';
+      await prefs.setBool(_kBlocked, true);
+      await prefs.setString(_kMessage, msg);
+      await prefs.setString(_kCode, '');
+      return LicenseState(allowed: false, message: msg);
     } catch (_) {
-      // لا يوجد إنترنت -> آخر حالة معروفة
+      // فشل الاتصال فقط (لا إنترنت) -> آخر حالة معروفة
     }
     return LicenseState(
       allowed: !(prefs.getBool(_kBlocked) ?? false),
