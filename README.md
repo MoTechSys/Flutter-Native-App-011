@@ -1,16 +1,23 @@
-# carcare
+# CarCare — كار كير
 
-A new Flutter project.
+سجل السيارة الذكي: إدارة الزيت، الإطارات، البطارية، الصيانة الدورية، استهلاك الوقود وتاريخ الإصلاحات.
 
-## Getting Started
+**الحزمة:** `com.carcare.maintenance` · **الإصدار الحالي:** 1.2.0 (build 6) · Flutter 3.35.4
 
-This project is a starting point for a Flutter application.
+**📱 آخر APK جاهز للتثبيت:** [`releases/CarCare-v1.2.0.apk`](releases/CarCare-v1.2.0.apk)
+**🛠 كيف تبني APK بنفسك:** [`BUILD_GUIDE.md`](BUILD_GUIDE.md)
+**📓 سجل التطوير والقرارات:** [`docs/SESSION_LOG.md`](docs/SESSION_LOG.md)
 
-A few resources to get you started if this is your first Flutter project:
+## الأدوار
+- **مستخدم واحد لكل حساب**: يسجّل سيارته ويتابع الزيت والإطارات والبطارية والصيانة الدورية والوقود والإصلاحات، مع إضافة/تعديل/حذف كل سجل وشاشة تفاصيل.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## التشغيل السريع
+```bash
+flutter pub get
+flutter analyze
+flutter test
+flutter build apk --release --target-platform android-arm64
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## التحكم عن بُعد
+`license.json` في جذر هذا المستودع يتحكم في التطبيق عند كل تشغيل (`active: true/false` + `code`؛ حذف الملف = قفل نهائي). التفاصيل في `BUILD_GUIDE.md` §6.
