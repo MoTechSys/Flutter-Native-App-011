@@ -160,6 +160,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
+                layoutBuilder: (current, previous) => Stack(
+                  alignment: Alignment.topCenter,
+                  children: [...previous, if (current != null) current],
+                ),
                 child: SingleChildScrollView(
                   key: ValueKey(_stage),
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
