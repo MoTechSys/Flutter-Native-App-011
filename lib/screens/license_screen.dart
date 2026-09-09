@@ -36,7 +36,7 @@ class _LicenseScreenState extends State<LicenseScreen> {
     } else {
       setState(() {
         _busy = false;
-        _error = 'كود التفعيل غير صحيح';
+        _error = 'الكود غير صحيح أو غير مسموح حالياً';
       });
     }
   }
