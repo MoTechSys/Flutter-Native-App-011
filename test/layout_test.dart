@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:carcare/services/license_service.dart';
 import 'package:carcare/models/models.dart';
 import 'package:carcare/screens/about_screen.dart';
 import 'package:carcare/screens/auth/forgot_password_screen.dart';
@@ -90,7 +91,10 @@ void main() {
     'login': () => LoginScreen(onLoggedIn: () {}),
     'register': () => const RegisterScreen(),
     'forgot': () => const ForgotPasswordScreen(),
-    'license': () => LicenseScreen(message: 'رسالة', onActivated: () {}),
+    'license': () => LicenseScreen(
+      gate: const LicenseGateResult(LicenseStatus.needsCode, message: 'رسالة'),
+      onUnlocked: () {},
+    ),
     'about': () => const AboutScreen(),
   }.entries) {
     testWidgets('screen ${e.key} no overflow', (t) async {

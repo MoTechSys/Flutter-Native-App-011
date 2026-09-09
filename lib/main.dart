@@ -57,7 +57,7 @@ class _Gate extends StatefulWidget {
 }
 
 class _GateState extends State<_Gate> {
-  LicenseState? _state;
+  LicenseGateResult? _gate;
   bool _loggedIn = false;
 
   @override
@@ -67,11 +67,11 @@ class _GateState extends State<_Gate> {
   }
 
   Future<void> _check() async {
-    final st = await LicenseService.check();
+    final gate = await LicenseGate.evaluate();
     final logged = await AuthService.isLoggedIn();
     if (mounted) {
       setState(() {
-        _state = st;
+        _gate = gate;
         _loggedIn = logged;
       });
     }
@@ -79,7 +79,7 @@ class _GateState extends State<_Gate> {
 
   @override
   Widget build(BuildContext context) {
-    if (_state == null) {
+    if (_gate == null) {
       return const Scaffold(
         body: Center(
           child: Column(
@@ -98,10 +98,11 @@ class _GateState extends State<_Gate> {
         ),
       );
     }
-    if (!_state!.allowed) {
+    if (!_gate!.canEnter) {
       return LicenseScreen(
-        message: _state!.message,
-        onActivated: () => setState(() => _state = LicenseState(allowed: true)),
+        gate: _gate!,
+        onUnlocked: () =>
+            setState(() => _gate = const LicenseGateResult(LicenseStatus.open)),
       );
     }
     if (!_loggedIn) {
