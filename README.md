@@ -10,6 +10,7 @@
 **📝 ما الجديد في 1.3.0:** [`docs/RELEASE_NOTES_1.3.0.md`](docs/RELEASE_NOTES_1.3.0.md) — رموز التحقق تُرسَل إلى بريد المستخدم (Gmail SMTP)، تأكيد البريد قبل إنشاء الحساب، إصلاح لوحة المفاتيح بعد العودة للتطبيق
 **🛠 كيف تبني APK بنفسك:** [`BUILD_GUIDE.md`](BUILD_GUIDE.md)
 **📓 سجل التطوير والقرارات:** [`docs/SESSION_LOG.md`](docs/SESSION_LOG.md)
+**🗂 سجل الإصدارات (كل الأرقام):** [`CHANGELOG.md`](CHANGELOG.md)
 
 ## الأدوار
 - **مستخدم واحد لكل حساب**: يسجّل سيارته ويتابع الزيت والإطارات والبطارية والصيانة الدورية والوقود والإصلاحات، مع إضافة/تعديل/حذف كل سجل وشاشة تفاصيل.
@@ -29,6 +30,15 @@ flutter test
 # APK مع إعدادات البريد (يقرأ android/smtp.env — انظر BUILD_GUIDE §3.د)
 ./build_release.sh
 ```
+
+## الإصدارات
+| versionName | versionCode | تاريخ | APK |
+|---|---|---|---|
+| **1.3.0** | **7** | 2026-09-11 | `releases/CarCare-v1.3.0.apk` (debug-signed — انظر الملاحظة أعلاه) |
+| 1.2.0 | 6 | 2026-09-09 | `releases/CarCare-v1.2.0.apk` (موقّع بمفتاح الإصدار) |
+| 1.1.3 → 1.0.0 | 5 → 1 | 2026-09-08/09 | بلا ملفات APK — انظر `CHANGELOG.md` |
+
+المصدر الوحيد لرقم الإصدار: `pubspec.yaml` → `version: 1.3.0+7` (يُقرأ منه `versionName`/`versionCode` في `android/app/build.gradle.kts`).
 
 ## التحكم عن بُعد
 `license.json` في جذر هذا المستودع يتحكم في التطبيق عند كل تشغيل (`active: true/false` + `code`؛ حذف الملف = قفل نهائي). التفاصيل في `BUILD_GUIDE.md` §6.

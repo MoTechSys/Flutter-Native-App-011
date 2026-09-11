@@ -19,6 +19,7 @@
 | `android/` | مشروع أندرويد (الحزمة `com.carcare.maintenance`) |
 | `web/` | ملفات الويب (تشمل `sqlite3.wasm` و`sqflite_sw.js` لعمل SQLite في المتصفح) |
 | `license.json` | **ملف التحكم عن بُعد** — يقرأه التطبيق عند كل تشغيل (§6) |
+| `CHANGELOG.md` | سجل كل الإصدارات (versionName/versionCode/tag/commit/APK) |
 | `docs/RELEASE_NOTES_1.3.0.md` | ملاحظات إصدار 1.3.0 (البريد + OTP + لوحة المفاتيح) |
 | `docs/RELEASE_NOTES_1.2.0.md` | ملاحظات وتوثيق إصدار 1.2.0 |
 | `docs/make_launcher_icons.py` | سكربت توليد أيقونة الإطلاق |
@@ -120,7 +121,7 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 3. `flutter analyze && flutter test`.
 4. `./build_release.sh` (يمرّر إعدادات البريد تلقائياً) أو `flutter build apk --release --target-platform android-arm64 --dart-define=…`.
 5. انسخ الناتج إلى `releases/CarCare-vX.Y.Z.apk`.
-6. حدّث ملاحظات الإصدار في `docs/`.
+6. حدّث ملاحظات الإصدار في `docs/` + `CHANGELOG.md` + رقم الإصدار في `lib/screens/about_screen.dart`.
 7. `git add -A && git commit -m "vX.Y.Z: ..." && git tag vX.Y.Z && git push origin main --tags`.
 
 ---

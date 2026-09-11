@@ -96,7 +96,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 child: const Padding(
                   padding: EdgeInsets.all(8),
                   child: Text(
-                    'الإصدار 1.2.0',
+                    'الإصدار 1.3.0 (build 7)',
                     style: TextStyle(color: AppColors.textDim),
                   ),
                 ),
@@ -146,6 +146,8 @@ class _AboutScreenState extends State<AboutScreen> {
               'حساب معدل استهلاك الوقود كم/لتر',
               'سجل زمني للإصلاحات مع إجمالي التكاليف',
               'يعمل بدون إنترنت وبيانات محفوظة محلياً',
+              'تأكيد البريد الإلكتروني برمز تحقق يُرسل إلى بريدك',
+              'استعادة كلمة المرور برمز OTP صالح 10 دقائق',
             ].map(
               (f) => Padding(
                 padding: const EdgeInsets.only(bottom: 6),
