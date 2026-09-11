@@ -29,6 +29,7 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const MenuButton(),
         title: const Text('الصيانة'),
         bottom: TabBar(
           controller: _tab,
@@ -87,7 +88,7 @@ class _TypeTab extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: last == null
-                        ? const Text(
+                        ? Text(
                             'لا يوجد سجل بعد.\nأضف أول صيانة للبدء.',
                             style: TextStyle(color: AppColors.textDim),
                           )
@@ -109,7 +110,7 @@ class _TypeTab extends StatelessWidget {
                               ),
                               Text(
                                 'القادمة: ${fmtNum(last.nextKm)} كم أو ${fmtDate(last.nextDate)}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   color: AppColors.textDim,
                                 ),
@@ -182,7 +183,7 @@ class _TypeTab extends StatelessWidget {
                                 const SizedBox(height: 2),
                                 Text(
                                   'كل ${fmtNum(r.intervalKm)} كم / ${r.intervalDays} يوم',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     color: AppColors.textDim,
                                   ),
@@ -294,7 +295,6 @@ Future<void> showAddMaintenance(
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: AppColors.card,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),

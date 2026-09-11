@@ -2,15 +2,22 @@
 
 سجل السيارة الذكي: إدارة الزيت، الإطارات، البطارية، الصيانة الدورية، استهلاك الوقود وتاريخ الإصلاحات.
 
-**الحزمة:** `com.carcare.maintenance` · **الإصدار الحالي:** 1.3.0 (build 7) · Flutter 3.35.4
+**الحزمة:** `com.carcare.maintenance` · **الإصدار الحالي:** 1.4.0 (build 8) · Flutter 3.35.4
 
-**📱 آخر APK جاهز للتثبيت:** [`releases/CarCare-v1.3.0.apk`](releases/CarCare-v1.3.0.apk) · السابق: [`releases/CarCare-v1.2.0.apk`](releases/CarCare-v1.2.0.apk)
-> ⚠️ **ملاحظة توقيع 1.3.0:** الملف الحالي في `releases/CarCare-v1.3.0.apk` مُوقَّع بمفتاح **debug** (مفتاح الإصدار لم يكن متاحاً وقت البناء)، لذا **لا يُثبَّت كتحديث فوق 1.2.0** بل يلزم حذف القديم أولاً. لإصدار نسخة تحديث حقيقية: ضع `release-key.jks` + `key.properties` في `android/` ثم `./build_release.sh` وبدّل الملف.
+**📱 آخر APK جاهز للتثبيت:** [`releases/CarCare-v1.4.0.apk`](releases/CarCare-v1.4.0.apk) · السابق: [`releases/CarCare-v1.3.0.apk`](releases/CarCare-v1.3.0.apk) · [`releases/CarCare-v1.2.0.apk`](releases/CarCare-v1.2.0.apk)
+**⬇️ رابط تحميل مباشر:** https://github.com/MoTechSys/Flutter-Native-App-011/raw/main/releases/CarCare-v1.4.0.apk
+> ⚠️ **ملاحظة توقيع 1.3.0 / 1.4.0:** الملفان `CarCare-v1.3.0.apk` و`CarCare-v1.4.0.apk` مُوقَّعان بمفتاح **debug** (مفتاح الإصدار لم يكن متاحاً وقت البناء)، لذا **لا يُثبَّتان كتحديث فوق 1.2.0** بل يلزم حذف القديم أولاً (1.4.0 يُثبَّت فوق 1.3.0 مباشرة). لإصدار نسخة تحديث حقيقية: ضع `release-key.jks` + `key.properties` في `android/` ثم `./build_release.sh` وبدّل الملف.
 
+**📝 ما الجديد في 1.4.0:** [`docs/RELEASE_NOTES_1.4.0.md`](docs/RELEASE_NOTES_1.4.0.md) — قائمة جانبية، شاشة إعدادات، وضع داكن/فاتح/النظام، اختيار العملة وحدّ التنبيه، تغيير كلمة المرور
 **📝 ما الجديد في 1.3.0:** [`docs/RELEASE_NOTES_1.3.0.md`](docs/RELEASE_NOTES_1.3.0.md) — رموز التحقق تُرسَل إلى بريد المستخدم (Gmail SMTP)، تأكيد البريد قبل إنشاء الحساب، إصلاح لوحة المفاتيح بعد العودة للتطبيق
 **🛠 كيف تبني APK بنفسك:** [`BUILD_GUIDE.md`](BUILD_GUIDE.md)
 **📓 سجل التطوير والقرارات:** [`docs/SESSION_LOG.md`](docs/SESSION_LOG.md)
 **🗂 سجل الإصدارات (كل الأرقام):** [`CHANGELOG.md`](CHANGELOG.md)
+
+## الواجهة (1.4.0)
+- **قائمة جانبية** من زر ☰ في أي تبويب: التنقل، مفتاح الوضع الداكن، الإعدادات، حول، خروج.
+- **الإعدادات**: المظهر (داكن/فاتح/النظام)، العملة، حدّ التنبيه بالكيلومتر، بيانات السيارة، تغيير كلمة المرور.
+- **وضعان كاملان** داكن وفاتح بنفس الهوية البرتقالية/السماوية.
 
 ## الأدوار
 - **مستخدم واحد لكل حساب**: يسجّل سيارته ويتابع الزيت والإطارات والبطارية والصيانة الدورية والوقود والإصلاحات، مع إضافة/تعديل/حذف كل سجل وشاشة تفاصيل.
@@ -34,11 +41,12 @@ flutter test
 ## الإصدارات
 | versionName | versionCode | تاريخ | APK |
 |---|---|---|---|
-| **1.3.0** | **7** | 2026-09-11 | `releases/CarCare-v1.3.0.apk` (debug-signed — انظر الملاحظة أعلاه) |
+| **1.4.0** | **8** | 2026-09-11 | `releases/CarCare-v1.4.0.apk` (debug-signed — انظر الملاحظة أعلاه) |
+| 1.3.0 | 7 | 2026-09-11 | `releases/CarCare-v1.3.0.apk` (debug-signed) |
 | 1.2.0 | 6 | 2026-09-09 | `releases/CarCare-v1.2.0.apk` (موقّع بمفتاح الإصدار) |
 | 1.1.3 → 1.0.0 | 5 → 1 | 2026-09-08/09 | بلا ملفات APK — انظر `CHANGELOG.md` |
 
-المصدر الوحيد لرقم الإصدار: `pubspec.yaml` → `version: 1.3.0+7` (يُقرأ منه `versionName`/`versionCode` في `android/app/build.gradle.kts`).
+المصدر الوحيد لرقم الإصدار: `pubspec.yaml` → `version: 1.4.0+8` (يُقرأ منه `versionName`/`versionCode` في `android/app/build.gradle.kts`).
 
 ## التحكم عن بُعد
 `license.json` في جذر هذا المستودع يتحكم في التطبيق عند كل تشغيل (`active: true/false` + `code`؛ حذف الملف = قفل نهائي). التفاصيل في `BUILD_GUIDE.md` §6.

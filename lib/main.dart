@@ -16,12 +16,16 @@ import 'screens/maintenance_screen.dart';
 import 'screens/repairs_screen.dart';
 import 'services/auth_service.dart';
 import 'services/license_service.dart';
+import 'services/settings_service.dart';
 import 'services/storage_service.dart';
 import 'theme.dart';
+import 'widgets/app_drawer.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SettingsService.instance.load();
   await StorageService.instance.init();
+  SettingsService.instance.onThemeChanged = StorageService.instance.refreshUi;
   runApp(const CarCareApp());
 }
 
@@ -30,21 +34,32 @@ class CarCareApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'CarCare - سجل السيارة',
-      debugShowCheckedModeBanner: false,
-      theme: buildTheme(),
-      // اللغة العربية و RTL
-      locale: const Locale('ar'),
-      supportedLocales: const [Locale('ar')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      builder: (context, child) =>
-          Directionality(textDirection: TextDirection.rtl, child: child!),
-      home: const _Gate(),
+    final settings = SettingsService.instance;
+    return AnimatedBuilder(
+      animation: settings,
+      builder: (context, _) {
+        // نحسم الوضع الفعلي هنا (داكن/فاتح/النظام) ونبني ثيماً واحداً مطابقاً
+        // حتى تتفق ألوان AppColors مع ThemeData في كل إعادة بناء.
+        final dark = settings.isDark(context);
+        return MaterialApp(
+          title: 'CarCare - سجل السيارة',
+          debugShowCheckedModeBanner: false,
+          theme: buildTheme(dark: dark),
+          darkTheme: buildTheme(dark: dark),
+          themeMode: ThemeMode.light,
+          // اللغة العربية و RTL
+          locale: const Locale('ar'),
+          supportedLocales: const [Locale('ar')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          builder: (context, child) =>
+              Directionality(textDirection: TextDirection.rtl, child: child!),
+          home: const _Gate(),
+        );
+      },
     );
   }
 }
@@ -135,6 +150,11 @@ class _MainShellState extends State<MainShell> {
       const RepairsScreen(),
     ];
     return Scaffold(
+      drawer: AppDrawer(
+        currentIndex: _index,
+        onNavigate: (i) => setState(() => _index = i),
+        onLogout: widget.onLogout,
+      ),
       body: IndexedStack(index: _index, children: pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,

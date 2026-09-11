@@ -7,8 +7,7 @@ import '../models/models.dart';
 import '../services/storage_service.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
-import '../services/auth_service.dart';
-import 'about_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final ValueChanged<int> onNavigate;
@@ -19,31 +18,6 @@ class HomeScreen extends StatelessWidget {
     required this.onLogout,
   });
 
-  Future<void> _logout(BuildContext context) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.card,
-        title: const Text('تسجيل الخروج'),
-        content: const Text('هل تريد الخروج من حسابك؟'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('خروج', style: TextStyle(color: AppColors.red)),
-          ),
-        ],
-      ),
-    );
-    if (ok == true) {
-      await AuthService.logout();
-      onLogout();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final s = StorageService.instance;
@@ -53,19 +27,23 @@ class HomeScreen extends StatelessWidget {
         final car = s.car;
         return Scaffold(
           appBar: AppBar(
+            leading: const MenuButton(),
             title: const Text('CarCare - سجل السيارة'),
             actions: [
               IconButton(
-                icon: const Icon(Icons.info_outline),
+                icon: const Icon(Icons.settings_outlined),
+                tooltip: 'الإعدادات',
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const AboutScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => SettingsScreen(onLogout: onLogout),
+                  ),
                 ),
               ),
               IconButton(
                 icon: const Icon(Icons.logout),
                 tooltip: 'تسجيل الخروج',
-                onPressed: () => _logout(context),
+                onPressed: () => confirmLogout(context, onLogout),
               ),
             ],
           ),
@@ -121,7 +99,7 @@ class HomeScreen extends StatelessWidget {
                 const _SectionTitle('آخر الإصلاحات'),
                 const SizedBox(height: 12),
                 if (s.repairs.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(20),
                     child: Center(
                       child: Text(
@@ -187,7 +165,6 @@ class _CarCard extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppColors.card,
         title: const Text('بيانات السيارة'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -267,14 +244,14 @@ class _CarCard extends StatelessWidget {
                     color: AppColors.teal,
                   ),
                 ),
-                const Text(
+                Text(
                   'قراءة العداد الحالية',
                   style: TextStyle(color: AppColors.textDim, fontSize: 12),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.edit, color: AppColors.textDim, size: 20),
+          Icon(Icons.edit, color: AppColors.textDim, size: 20),
         ],
       ),
     );
@@ -315,18 +292,25 @@ class _StatusCard extends StatelessWidget {
                 icon: typeIcon(type),
                 size: 52,
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor(status).withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  statusLabel(status),
-                  style: TextStyle(
-                    color: statusColor(status),
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor(status).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    statusLabel(status),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: statusColor(status),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -344,7 +328,7 @@ class _StatusCard extends StatelessWidget {
             sub,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: AppColors.textDim, fontSize: 12),
+            style: TextStyle(color: AppColors.textDim, fontSize: 12),
           ),
         ],
       ),
@@ -383,10 +367,7 @@ class _MiniStat extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          Text(
-            label,
-            style: const TextStyle(color: AppColors.textDim, fontSize: 12),
-          ),
+          Text(label, style: TextStyle(color: AppColors.textDim, fontSize: 12)),
         ],
       ),
     );

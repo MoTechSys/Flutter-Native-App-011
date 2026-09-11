@@ -68,22 +68,22 @@ class RecordDetailsScreen extends StatelessWidget {
                     ListTile(
                       title: Text(
                         e.key,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textDim,
                           fontSize: 13,
                         ),
                       ),
                       subtitle: Text(
                         e.value,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: AppColors.text,
                         ),
                       ),
                     ),
                     if (e.key != fields.keys.last)
-                      const Divider(height: 1, color: Colors.white12),
+                      Divider(height: 1, color: AppColors.divider),
                   ],
                 ],
               ),

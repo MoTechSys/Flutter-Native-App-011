@@ -33,7 +33,7 @@ void main() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
     final s = StorageService.instance;
-    await s.init();
+    await s.init(dbName: 'test_screens.db');
     // بيانات كبيرة/طويلة عمداً لكشف مشاكل التخطيط
     await s.saveCar(
       Car(name: 'تويوتا لاندكروزر VXR 2022 فل كامل', odometer: 1250000),

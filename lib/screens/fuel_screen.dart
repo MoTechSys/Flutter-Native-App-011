@@ -16,7 +16,10 @@ class FuelScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = StorageService.instance;
     return Scaffold(
-      appBar: AppBar(title: const Text('استهلاك الوقود')),
+      appBar: AppBar(
+        leading: const MenuButton(),
+        title: const Text('استهلاك الوقود'),
+      ),
       body: SafeArea(
         child: AnimatedBuilder(
           animation: s,
@@ -47,7 +50,7 @@ class FuelScreen extends StatelessWidget {
                           color: AppColors.purple,
                         ),
                       ),
-                      const Text(
+                      Text(
                         'كم / لتر (متوسط الاستهلاك)',
                         style: TextStyle(color: AppColors.textDim),
                       ),
@@ -62,7 +65,7 @@ class FuelScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                      const Divider(height: 28, color: Colors.white12),
+                      Divider(height: 28, color: AppColors.divider),
                       Row(
                         children: [
                           _Stat('هذا الشهر', fmtMoney(s.thisMonthFuelCost)),
@@ -134,7 +137,7 @@ class FuelScreen extends StatelessWidget {
                         ),
                         subtitle: Text(
                           '${fmtDate(r.date)} • ${fmtNum(r.odometer)} كم\n${r.pricePerLiter.toStringAsFixed(2)} ر.س/لتر',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textDim,
                           ),
@@ -203,7 +206,6 @@ class FuelScreen extends StatelessWidget {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -323,10 +325,7 @@ class _Stat extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        Text(
-          label,
-          style: const TextStyle(color: AppColors.textDim, fontSize: 11),
-        ),
+        Text(label, style: TextStyle(color: AppColors.textDim, fontSize: 11)),
       ],
     ),
   );

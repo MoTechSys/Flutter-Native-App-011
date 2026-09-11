@@ -363,7 +363,7 @@ class _Intro extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 body,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textDim,
                   fontSize: 13,
                   height: 1.5,

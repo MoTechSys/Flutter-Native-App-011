@@ -1,7 +1,7 @@
 # دليل البناء — CarCare
 
 > لأي شخص يحمّل المستودع ويريد **تشغيل التطبيق أو إنتاج ملف APK بنفسه** خطوة بخطوة.
-> آخر APK جاهز موجود في [`releases/CarCare-v1.3.0.apk`](releases/CarCare-v1.3.0.apk) — إن أردت التثبيت فقط بلا بناء، حمّله من هناك.
+> آخر APK جاهز موجود في [`releases/CarCare-v1.4.0.apk`](releases/CarCare-v1.4.0.apk) — إن أردت التثبيت فقط بلا بناء، حمّله من هناك.
 
 ---
 
@@ -9,8 +9,9 @@
 
 | المسار | الغرض |
 |---|---|
-| `releases/CarCare-v1.3.0.apk` | **آخر إصدار جاهز للتثبيت** (android-arm64) · `CarCare-v1.2.0.apk` الإصدار السابق |
-| `lib/` | كود التطبيق (23 ملف Dart) |
+| `releases/CarCare-v1.4.0.apk` | **آخر إصدار جاهز للتثبيت** (android-arm64) · `CarCare-v1.3.0.apk` و`CarCare-v1.2.0.apk` الإصدارات السابقة |
+| `lib/` | كود التطبيق (26 ملف Dart) |
+| `lib/services/settings_service.dart` · `lib/screens/settings_screen.dart` · `lib/widgets/app_drawer.dart` | الإعدادات، الوضع داكن/فاتح، القائمة الجانبية (1.4.0) |
 | `lib/services/mail/` + `lib/services/otp_service.dart` | خدمة البريد (SMTP) ومحرك رموز التحقق (§7) |
 | `build_release.sh` | يبني APK ويمرّر إعدادات البريد من `android/smtp.env` (§3.د) |
 | `android/smtp.env.example` | نموذج إعدادات البريد — انسخه إلى `android/smtp.env` (مُتجاهَل في git) |
@@ -20,6 +21,7 @@
 | `web/` | ملفات الويب (تشمل `sqlite3.wasm` و`sqflite_sw.js` لعمل SQLite في المتصفح) |
 | `license.json` | **ملف التحكم عن بُعد** — يقرأه التطبيق عند كل تشغيل (§6) |
 | `CHANGELOG.md` | سجل كل الإصدارات (versionName/versionCode/tag/commit/APK) |
+| `docs/RELEASE_NOTES_1.4.0.md` | ملاحظات إصدار 1.4.0 (قائمة جانبية + إعدادات + وضع فاتح) |
 | `docs/RELEASE_NOTES_1.3.0.md` | ملاحظات إصدار 1.3.0 (البريد + OTP + لوحة المفاتيح) |
 | `docs/RELEASE_NOTES_1.2.0.md` | ملاحظات وتوثيق إصدار 1.2.0 |
 | `docs/make_launcher_icons.py` | سكربت توليد أيقونة الإطلاق |

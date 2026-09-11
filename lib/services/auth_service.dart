@@ -19,6 +19,11 @@ class AuthService {
     await p.setString(_kName, name);
   }
 
+  static Future<String?> currentEmail() async {
+    final p = await SharedPreferences.getInstance();
+    return p.getString(_kEmail);
+  }
+
   static Future<String> currentName() async {
     final p = await SharedPreferences.getInstance();
     return p.getString(_kName) ?? 'المستخدم';

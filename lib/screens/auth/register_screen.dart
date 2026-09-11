@@ -168,7 +168,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       children: [
         const Icon(Icons.person_add_alt_1, size: 64, color: AppColors.teal),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'سنرسل رمز تحقق إلى بريدك قبل تفعيل الحساب',
           textAlign: TextAlign.center,
           style: TextStyle(color: AppColors.textDim, fontSize: 13),

@@ -93,10 +93,10 @@ class _AboutScreenState extends State<AboutScreen> {
             Center(
               child: GestureDetector(
                 onTap: _onVersionTap,
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.all(8),
                   child: Text(
-                    'الإصدار 1.3.0 (build 7)',
+                    'الإصدار 1.4.0 (build 8)',
                     style: TextStyle(color: AppColors.textDim),
                   ),
                 ),
@@ -108,15 +108,15 @@ class _AboutScreenState extends State<AboutScreen> {
                 padding: const EdgeInsets.all(18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     _Row(Icons.person, 'إعداد الطالب', 'عبد الجبار رمزي'),
-                    Divider(color: Colors.white12, height: 24),
+                    Divider(color: AppColors.divider, height: 24),
                     _Row(
                       Icons.school,
                       'نوع المشروع',
                       'مشروع نصف الترم - Flutter',
                     ),
-                    Divider(color: Colors.white12, height: 24),
+                    Divider(color: AppColors.divider, height: 24),
                     _Row(Icons.storage, 'التخزين', 'محلي على الجهاز (Hive)'),
                   ],
                 ),
@@ -128,7 +128,7 @@ class _AboutScreenState extends State<AboutScreen> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'تطبيق لإدارة صيانة السيارة يساعد المالك على متابعة تغيير الزيت، '
               'الإطارات، البطارية، الصيانة الدورية، تسجيل استهلاك الوقود وحساب '
               'معدل الاستهلاك، والاحتفاظ بتاريخ كامل للإصلاحات وتكاليفها.',
@@ -148,6 +148,7 @@ class _AboutScreenState extends State<AboutScreen> {
               'يعمل بدون إنترنت وبيانات محفوظة محلياً',
               'تأكيد البريد الإلكتروني برمز تحقق يُرسل إلى بريدك',
               'استعادة كلمة المرور برمز OTP صالح 10 دقائق',
+              'قائمة جانبية وشاشة إعدادات مع وضع داكن/فاتح',
             ].map(
               (f) => Padding(
                 padding: const EdgeInsets.only(bottom: 6),
@@ -180,7 +181,7 @@ class _Row extends StatelessWidget {
     children: [
       Icon(icon, color: AppColors.orange),
       const SizedBox(width: 12),
-      Text('$label: ', style: const TextStyle(color: AppColors.textDim)),
+      Text('$label: ', style: TextStyle(color: AppColors.textDim)),
       Expanded(
         child: Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
       ),

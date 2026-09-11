@@ -136,10 +136,7 @@ class _LicenseScreenState extends State<LicenseScreen> {
                           ? 'للمتابعة أدخل كود التفعيل الذي حصلت عليه من المطوّر.'
                           : widget.gate.message,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppColors.textDim,
-                        height: 1.6,
-                      ),
+                      style: TextStyle(color: AppColors.textDim, height: 1.6),
                     ),
                     const SizedBox(height: 24),
                     if (!_revoked) ...[
@@ -156,7 +153,7 @@ class _LicenseScreenState extends State<LicenseScreen> {
                         ),
                         decoration: InputDecoration(
                           hintText: 'XXX-0000',
-                          hintStyle: const TextStyle(
+                          hintStyle: TextStyle(
                             letterSpacing: 3,
                             color: AppColors.textDim,
                           ),

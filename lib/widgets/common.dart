@@ -6,13 +6,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../models/models.dart';
+import '../services/auth_service.dart';
+import '../services/settings_service.dart';
 import '../theme.dart';
 
 final _numFmt = NumberFormat('#,###', 'en');
 final _dateFmt = DateFormat('yyyy/MM/dd');
 
 String fmtNum(num n) => _numFmt.format(n);
-String fmtMoney(num n) => '${NumberFormat('#,##0.##', 'en').format(n)} ر.س';
+String fmtMoney(num n) =>
+    '${NumberFormat('#,##0.##', 'en').format(n)} ${SettingsService.instance.currency}';
 String fmtDate(DateTime d) => _dateFmt.format(d);
 
 Color statusColor(HealthStatus s) {
@@ -133,7 +136,7 @@ class ProgressRing extends StatelessWidget {
             child: CircularProgressIndicator(
               value: progress,
               strokeWidth: 6,
-              backgroundColor: Colors.white.withValues(alpha: 0.1),
+              backgroundColor: AppColors.text.withValues(alpha: 0.1),
               color: color,
             ),
           ),
@@ -158,10 +161,7 @@ class EmptyState extends StatelessWidget {
         children: [
           Icon(icon, size: 70, color: AppColors.textDim),
           const SizedBox(height: 12),
-          Text(
-            text,
-            style: const TextStyle(color: AppColors.textDim, fontSize: 16),
-          ),
+          Text(text, style: TextStyle(color: AppColors.textDim, fontSize: 16)),
         ],
       ),
     );
@@ -214,7 +214,6 @@ Future<bool> confirmDelete(BuildContext context) async {
   final r = await showDialog<bool>(
     context: context,
     builder: (_) => AlertDialog(
-      backgroundColor: AppColors.card,
       title: const Text('حذف السجل'),
       content: const Text('هل أنت متأكد من حذف هذا السجل؟'),
       actions: [
@@ -230,6 +229,31 @@ Future<bool> confirmDelete(BuildContext context) async {
     ),
   );
   return r ?? false;
+}
+
+/// تأكيد تسجيل الخروج ثم تنفيذه
+Future<void> confirmLogout(BuildContext context, VoidCallback onLogout) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text('تسجيل الخروج'),
+      content: const Text('هل تريد الخروج من حسابك؟'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('إلغاء'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('خروج', style: TextStyle(color: AppColors.red)),
+        ),
+      ],
+    ),
+  );
+  if (ok == true) {
+    await AuthService.logout();
+    onLogout();
+  }
 }
 
 /// حقل اختيار تاريخ
@@ -254,7 +278,7 @@ class DateField extends StatelessWidget {
       child: InputDecorator(
         decoration: const InputDecoration(
           labelText: 'التاريخ',
-          suffixIcon: Icon(Icons.calendar_today, color: AppColors.textDim),
+          suffixIcon: Icon(Icons.calendar_today),
         ),
         child: Text(fmtDate(value)),
       ),
@@ -302,4 +326,21 @@ class _KeyboardResumeFixState extends State<KeyboardResumeFix>
 
   @override
   Widget build(BuildContext context) => widget.child;
+}
+
+/// زر القائمة الجانبية: يفتح Drawer الهيكل الرئيسي حتى من داخل Scaffold متداخل
+/// (كل تبويب في IndexedStack له Scaffold خاص، والقائمة معرَّفة في الهيكل الأعلى).
+class MenuButton extends StatelessWidget {
+  const MenuButton({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final root = context.findRootAncestorStateOfType<ScaffoldState>();
+    if (root == null || !root.hasDrawer) return const SizedBox.shrink();
+    return IconButton(
+      key: const Key('menu_button'),
+      icon: const Icon(Icons.menu),
+      tooltip: 'القائمة',
+      onPressed: root.openDrawer,
+    );
+  }
 }

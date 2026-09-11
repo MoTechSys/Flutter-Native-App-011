@@ -195,7 +195,7 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
-      await s.init();
+      await s.init(dbName: 'test_auth.db');
       await s.register('سائق', email, 'old12345');
       MailService.debugCanSendOverride = false; // الرمز يُعرض داخل التطبيق
     });

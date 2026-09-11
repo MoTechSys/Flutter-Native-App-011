@@ -16,7 +16,10 @@ class RepairsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = StorageService.instance;
     return Scaffold(
-      appBar: AppBar(title: const Text('تاريخ الإصلاحات')),
+      appBar: AppBar(
+        leading: const MenuButton(),
+        title: const Text('تاريخ الإصلاحات'),
+      ),
       body: SafeArea(
         child: AnimatedBuilder(
           animation: s,
@@ -51,7 +54,7 @@ class RepairsScreen extends StatelessWidget {
                               ),
                               Text(
                                 'إجمالي تكلفة الإصلاحات (${list.length} إصلاح)',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.textDim,
                                   fontSize: 12,
                                 ),
@@ -110,7 +113,6 @@ class RepairsScreen extends StatelessWidget {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -276,7 +278,7 @@ class _TimelineItem extends StatelessWidget {
                 ),
               ),
               if (!isLast)
-                Expanded(child: Container(width: 2, color: Colors.white12)),
+                Expanded(child: Container(width: 2, color: AppColors.divider)),
             ],
           ),
           const SizedBox(width: 12),
@@ -352,7 +354,7 @@ class _TimelineItem extends StatelessWidget {
                         const SizedBox(height: 6),
                         Text(
                           '${fmtDate(record.date)} • ${fmtNum(record.odometer)} كم${record.workshop.isNotEmpty ? ' • ${record.workshop}' : ''}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textDim,
                             fontSize: 12,
                           ),

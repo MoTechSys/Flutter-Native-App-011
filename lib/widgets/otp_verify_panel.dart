@@ -350,10 +350,7 @@ class _StatusCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textDirection: TextDirection.ltr,
-                      style: const TextStyle(
-                        color: AppColors.textDim,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: AppColors.textDim, fontSize: 12),
                     ),
                   ],
                 ),
@@ -361,7 +358,7 @@ class _StatusCard extends StatelessWidget {
             ],
           ),
           if (delivered)
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(top: 10),
               child: Text(
                 'افتح بريدك، انسخ الرمز المكوّن من 6 أرقام ثم عد إلى التطبيق '

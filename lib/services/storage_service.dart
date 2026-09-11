@@ -8,6 +8,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import '../models/models.dart';
 import 'password_hasher.dart';
+import 'settings_service.dart';
 
 class StorageService extends ChangeNotifier {
   static final StorageService instance = StorageService._();
@@ -21,10 +22,11 @@ class StorageService extends ChangeNotifier {
   List<FuelRecord> _fuel = [];
   List<RepairRecord> _repairs = [];
 
-  Future<void> init() async {
+  /// [dbName] يُستخدم في الاختبارات فقط لعزل قاعدة كل ملف اختبار (تشغيل متوازٍ).
+  Future<void> init({String dbName = 'carcare.db'}) async {
     // على الويب (للمعاينة فقط) نستخدم نسخة الويب من SQLite؛ على أندرويد الأصلية
     if (kIsWeb) databaseFactory = databaseFactoryFfiWeb;
-    final path = '${await getDatabasesPath()}/carcare.db';
+    final path = '${await getDatabasesPath()}/$dbName';
     _db = await openDatabase(
       path,
       version: 1,
@@ -100,6 +102,9 @@ class StorageService extends ChangeNotifier {
 
     notifyListeners();
   }
+
+  /// إعادة رسم الواجهات المعتمدة على العملة/حدّ التنبيه بعد تغيير الإعدادات.
+  void refreshUi() => notifyListeners();
 
   String _newId() => DateTime.now().microsecondsSinceEpoch.toString();
 
@@ -208,7 +213,10 @@ class StorageService extends ChangeNotifier {
     final kmLeft = last.nextKm - _car.odometer;
     final daysLeft = last.nextDate.difference(DateTime.now()).inDays;
     if (kmLeft <= 0 || daysLeft <= 0) return HealthStatus.overdue;
-    if (kmLeft <= last.intervalKm * 0.2 || daysLeft <= 30) {
+    final reminderKm = SettingsService.instance.reminderKm;
+    if (kmLeft <= last.intervalKm * 0.2 ||
+        kmLeft <= reminderKm ||
+        daysLeft <= 30) {
       return HealthStatus.warning;
     }
     return HealthStatus.good;
