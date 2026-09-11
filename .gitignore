@@ -10,3 +10,6 @@ android/local.properties
 android/key.properties
 android/release-key.jks
 *.log
+android/smtp.env
+.pub-cache-policy
+.pub-resolve-policy

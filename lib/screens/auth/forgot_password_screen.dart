@@ -3,19 +3,18 @@
 //
 // المراحل:
 //   [1] البريد      : التأكد أن الحساب موجود
-//   [2] رمز التحقق  : توليد رمز من 4 أرقام (صالح 3 دقائق) مع نسخ/تجديد
-//   [3] كلمة جديدة  : بعد نجاح التحقق فقط
+//   [2] رمز التحقق  : رمز 6 أرقام يُرسل إلى بريد المستخدم (صالح 10 دقائق)
+//                     النظام يفحص: الرمز المدخل == المُرسل؟
+//   [3] كلمة جديدة  : تُفتح فقط إذا تطابق الرمز؛ وإلا تظهر رسالة فشل
 // ============================================================
 
-import 'dart:async';
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
+import '../../services/otp_service.dart';
 import '../../services/storage_service.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/otp_verify_panel.dart';
 
 enum _Stage { email, verify, reset }
 
@@ -26,109 +25,82 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  static const _codeLength = 4;
-  static const _validity = Duration(minutes: 3);
-  static const _maxTries = 3;
-
   final _emailForm = GlobalKey<FormState>();
   final _resetForm = GlobalKey<FormState>();
   final _email = TextEditingController();
-  final _code = TextEditingController();
   final _pass1 = TextEditingController();
   final _pass2 = TextEditingController();
 
   _Stage _stage = _Stage.email;
-  String _issued = '';
-  DateTime? _expiresAt;
-  int _tries = 0;
+  OtpIssueResult? _otp;
   bool _busy = false;
   bool _obscure = true;
-  Timer? _ticker;
 
   @override
   void dispose() {
-    _ticker?.cancel();
+    _email.dispose();
+    _pass1.dispose();
+    _pass2.dispose();
     super.dispose();
   }
 
-  // ------------------------------------------------------------ OTP
-  Duration get _remaining {
-    final e = _expiresAt;
-    if (e == null) return Duration.zero;
-    final d = e.difference(DateTime.now());
-    return d.isNegative ? Duration.zero : d;
-  }
-
-  bool get _expired => _remaining == Duration.zero;
-
-  void _issueCode() {
-    final rnd = Random.secure();
-    _issued = List.generate(_codeLength, (_) => rnd.nextInt(10)).join();
-    _expiresAt = DateTime.now().add(_validity);
-    _tries = 0;
-    _code.clear();
-    _ticker?.cancel();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  String _fmt(Duration d) =>
-      '${d.inMinutes.remainder(60).toString().padLeft(2, '0')}:${d.inSeconds.remainder(60).toString().padLeft(2, '0')}';
-
   // ------------------------------------------------------------ actions
+  /// الخطوة 1+2: التأكد أن البريد مسجّل ثم إرسال رمز OTP إليه.
   Future<void> _submitEmail() async {
     if (!_emailForm.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
     setState(() => _busy = true);
-    final ok = await StorageService.instance.emailExists(_email.text.trim());
+    final email = _email.text.trim();
+    final ok = await StorageService.instance.emailExists(email);
     if (!mounted) return;
-    setState(() => _busy = false);
     if (!ok) {
+      setState(() => _busy = false);
       showSnack(context, 'هذا البريد غير مسجّل لدينا', error: true);
       return;
     }
+    final r = await OtpService.issueAndSend(email, OtpPurpose.resetPassword);
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (!r.delivered && r.error != null) {
+      showSnack(context, r.error!, error: true);
+      return;
+    }
     setState(() {
-      _issueCode();
+      _otp = r;
       _stage = _Stage.verify;
     });
-    showSnack(context, 'تم توليد رمز التحقق');
+    showSnack(
+      context,
+      r.delivered
+          ? 'تم إرسال رمز التحقق إلى $email'
+          : 'وضع المعاينة: الرمز معروض داخل التطبيق',
+    );
   }
 
-  void _verify() {
-    final typed = _code.text.trim();
-    if (typed.length != _codeLength) {
-      showSnack(context, 'الرمز مكوّن من $_codeLength أرقام', error: true);
+  Future<void> _resend() async {
+    final r = await OtpService.issueAndSend(
+      _email.text.trim(),
+      OtpPurpose.resetPassword,
+    );
+    if (!mounted) return;
+    if (!r.delivered && r.error != null) {
+      showSnack(context, r.error!, error: true);
       return;
     }
-    if (_expired) {
-      showSnack(context, 'انتهت مدة الرمز، اضغط "رمز جديد"', error: true);
-      return;
-    }
-    if (typed != _issued) {
-      _tries++;
-      if (_tries >= _maxTries) {
-        setState(() {
-          _issued = '';
-          _expiresAt = null;
-        });
-        showSnack(
-          context,
-          'تم إلغاء الرمز بعد $_maxTries محاولات خاطئة',
-          error: true,
-        );
-      } else {
-        showSnack(
-          context,
-          'رمز غير صحيح، بقي ${_maxTries - _tries} محاولة',
-          error: true,
-        );
-      }
-      return;
-    }
-    _ticker?.cancel();
-    setState(() => _stage = _Stage.reset);
-    showSnack(context, 'تم التحقق، أدخل كلمة المرور الجديدة');
+    setState(() => _otp = r);
+    showSnack(context, r.delivered ? 'تم إرسال رمز جديد' : 'تم توليد رمز جديد');
   }
+
+  /// الخطوة 5: الرمز مطابق → الانتقال لكتابة كلمة مرور جديدة.
+  void _onVerified() {
+    setState(() => _stage = _Stage.reset);
+    showSnack(context, 'تم التحقق بنجاح، أدخل كلمة المرور الجديدة');
+  }
+
+  void _backToEmail() => setState(() {
+    _stage = _Stage.email;
+    _otp = null;
+  });
 
   Future<void> _saveNewPassword() async {
     if (!_resetForm.currentState!.validate()) return;
@@ -142,40 +114,36 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     Navigator.pop(context);
   }
 
-  Future<void> _copy() async {
-    if (_issued.isEmpty) return;
-    await Clipboard.setData(ClipboardData(text: _issued));
-    if (mounted) showSnack(context, 'تم نسخ الرمز إلى الحافظة');
-  }
-
   // ------------------------------------------------------------ UI
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('استعادة كلمة المرور')),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _StageHeader(stage: _stage),
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                layoutBuilder: (current, previous) => Stack(
-                  alignment: Alignment.topCenter,
-                  children: [...previous, if (current != null) current],
-                ),
-                child: SingleChildScrollView(
-                  key: ValueKey(_stage),
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                  child: switch (_stage) {
-                    _Stage.email => _emailStage(),
-                    _Stage.verify => _verifyStage(),
-                    _Stage.reset => _resetStage(),
-                  },
+    return KeyboardResumeFix(
+      child: Scaffold(
+        appBar: AppBar(title: const Text('استعادة كلمة المرور')),
+        body: SafeArea(
+          child: Column(
+            children: [
+              _StageHeader(stage: _stage),
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  layoutBuilder: (current, previous) => Stack(
+                    alignment: Alignment.topCenter,
+                    children: [...previous, if (current != null) current],
+                  ),
+                  child: SingleChildScrollView(
+                    key: ValueKey(_stage),
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                    child: switch (_stage) {
+                      _Stage.email => _emailStage(),
+                      _Stage.verify => _verifyStage(),
+                      _Stage.reset => _resetStage(),
+                    },
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -189,12 +157,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         const _Intro(
           icon: Icons.alternate_email,
           title: 'ما بريدك الإلكتروني؟',
-          body: 'أدخل البريد المرتبط بحسابك حتى نُنشئ لك رمز تحقق.',
+          body: 'أدخل البريد المرتبط بحسابك وسنرسل إليه رمز تحقق من 6 أرقام.',
         ),
         TextFormField(
           controller: _email,
           keyboardType: TextInputType.emailAddress,
           textDirection: TextDirection.ltr,
+          textInputAction: TextInputAction.done,
+          autofillHints: const [AutofillHints.email],
+          onFieldSubmitted: (_) => _busy ? null : _submitEmail(),
           decoration: const InputDecoration(
             labelText: 'البريد الإلكتروني',
             prefixIcon: Icon(Icons.email_outlined),
@@ -205,135 +176,50 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         FilledButton.icon(
           onPressed: _busy ? null : _submitEmail,
           style: FilledButton.styleFrom(backgroundColor: AppColors.orange),
-          icon: const Icon(Icons.send),
-          label: const Text('إرسال رمز التحقق'),
+          icon: _busy
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Icon(Icons.send),
+          label: Text(_busy ? 'جارٍ الإرسال...' : 'إرسال رمز التحقق'),
         ),
       ],
     ),
   );
 
-  Widget _verifyStage() => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      const _Intro(
-        icon: Icons.sms_outlined,
-        title: 'رمز التحقق',
-        body: 'انسخ الرمز الظاهر بالأسفل وأدخله في الحقل للمتابعة.',
-      ),
-      // الرمز في خانات
-      Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.teal.withValues(alpha: 0.4)),
+  Widget _verifyStage() {
+    final otp = _otp!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _Intro(
+          icon: Icons.mark_email_unread_outlined,
+          title: 'رمز التحقق',
+          body:
+              'أدخل الرمز الذي وصلك على بريدك. إن كان مطابقاً نُكمل إلى '
+              'كلمة المرور الجديدة، وإلا تظهر رسالة فشل.',
         ),
-        child: Column(
-          children: [
-            Text(
-              _email.text.trim(),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textDirection: TextDirection.ltr,
-              style: const TextStyle(color: AppColors.textDim, fontSize: 12),
-            ),
-            const SizedBox(height: 10),
-            Directionality(
-              textDirection: TextDirection.ltr,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  _codeLength,
-                  (i) => Container(
-                    width: 46,
-                    height: 54,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.cardLight,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      _issued.isEmpty ? '•' : _issued[i],
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.teal,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              alignment: WrapAlignment.center,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 6,
-              children: [
-                Icon(
-                  Icons.hourglass_bottom,
-                  size: 15,
-                  color: _expired ? AppColors.red : AppColors.textDim,
-                ),
-                Text(
-                  _expired ? 'انتهت المدة' : 'ينتهي خلال ${_fmt(_remaining)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: _expired ? AppColors.red : AppColors.textDim,
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: _issued.isEmpty ? null : _copy,
-                  icon: const Icon(Icons.content_copy, size: 16),
-                  label: const Text('نسخ'),
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    setState(_issueCode);
-                    showSnack(context, 'تم توليد رمز جديد');
-                  },
-                  icon: const Icon(Icons.autorenew, size: 16),
-                  label: const Text('رمز جديد'),
-                ),
-              ],
-            ),
-          ],
+        OtpVerifyPanel(
+          key: ValueKey(otp.session.issuedAt),
+          session: otp.session,
+          delivered: otp.delivered,
+          busy: _busy,
+          onVerified: _onVerified,
+          onResend: _resend,
+          onLocked: _backToEmail,
         ),
-      ),
-      const SizedBox(height: 18),
-      TextField(
-        key: const Key('otp_field'),
-        controller: _code,
-        keyboardType: TextInputType.number,
-        textDirection: TextDirection.ltr,
-        textAlign: TextAlign.center,
-        maxLength: _codeLength,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        onSubmitted: (_) => _verify(),
-        style: const TextStyle(fontSize: 22, letterSpacing: 10),
-        decoration: const InputDecoration(
-          labelText: 'الرمز',
-          counterText: '',
-          prefixIcon: Icon(Icons.dialpad),
+        TextButton(
+          onPressed: _busy ? null : _backToEmail,
+          child: const Text('رجوع لتعديل البريد'),
         ),
-      ),
-      const SizedBox(height: 18),
-      FilledButton.icon(
-        onPressed: _verify,
-        style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
-        icon: const Icon(Icons.verified_user),
-        label: const Text('تأكيد الرمز'),
-      ),
-      TextButton(
-        onPressed: () => setState(() {
-          _ticker?.cancel();
-          _stage = _Stage.email;
-        }),
-        child: const Text('رجوع لتعديل البريد'),
-      ),
-    ],
-  );
+      ],
+    );
+  }
 
   Widget _resetStage() => Form(
     key: _resetForm,

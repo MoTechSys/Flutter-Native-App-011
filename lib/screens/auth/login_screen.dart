@@ -50,7 +50,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return KeyboardResumeFix(
+      child: Scaffold(
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -85,6 +86,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _emailCtl,
                     keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.email],
                     textDirection: TextDirection.ltr,
                     decoration: const InputDecoration(
                       labelText: 'البريد الإلكتروني',
@@ -96,6 +99,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _passCtl,
                     obscureText: _hidePass,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: const [AutofillHints.password],
+                    onFieldSubmitted: (_) => _busy ? null : _login(),
                     decoration: InputDecoration(
                       labelText: 'كلمة المرور',
                       prefixIcon: const Icon(Icons.lock_outline),
@@ -161,6 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

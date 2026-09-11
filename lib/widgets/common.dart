@@ -3,6 +3,7 @@
 // ============================================================
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../models/models.dart';
 import '../theme.dart';
@@ -259,4 +260,46 @@ class DateField extends StatelessWidget {
       ),
     );
   }
+}
+
+/// إصلاح لوحة المفاتيح بعد العودة إلى التطبيق:
+/// عند الرجوع من الخلفية (مثلاً بعد فتح تطبيق البريد لنسخ الرمز) قد تفقد
+/// حقول الإدخال اتصالها بلوحة المفاتيح على أندرويد فلا تظهر عند النقر.
+/// هذا الغلاف يعيد ربط التركيز ويطلب إظهار لوحة المفاتيح صراحةً.
+class KeyboardResumeFix extends StatefulWidget {
+  final Widget child;
+  const KeyboardResumeFix({super.key, required this.child});
+  @override
+  State<KeyboardResumeFix> createState() => _KeyboardResumeFixState();
+}
+
+class _KeyboardResumeFixState extends State<KeyboardResumeFix>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || !mounted) return;
+    final f = FocusManager.instance.primaryFocus;
+    if (f == null || f.context == null || f is FocusScopeNode) return;
+    f.unfocus();
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (!mounted) return;
+      f.requestFocus();
+      SystemChannels.textInput.invokeMethod<void>('TextInput.show');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

@@ -1,7 +1,7 @@
 name: carcare
 description: "CarCare - سجل السيارة الذكي: إدارة الزيت، الإطارات، البطارية، الصيانة الدورية، استهلاك الوقود وتاريخ الإصلاحات."
 publish_to: 'none'
-version: 1.2.0+6
+version: 1.3.0+7
 
 environment:
   sdk: ^3.9.2
@@ -17,6 +17,7 @@ dependencies:
   http: 1.5.0
   crypto: ^3.0.3
   intl: any
+  mailer: ^7.2.0
 
 dev_dependencies:
   flutter_test:

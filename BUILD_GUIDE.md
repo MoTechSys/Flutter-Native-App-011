@@ -1,7 +1,7 @@
 # دليل البناء — CarCare
 
 > لأي شخص يحمّل المستودع ويريد **تشغيل التطبيق أو إنتاج ملف APK بنفسه** خطوة بخطوة.
-> آخر APK جاهز موجود في [`releases/CarCare-v1.2.0.apk`](releases/CarCare-v1.2.0.apk) — إن أردت التثبيت فقط بلا بناء، حمّله من هناك.
+> آخر APK جاهز موجود في [`releases/CarCare-v1.3.0.apk`](releases/CarCare-v1.3.0.apk) — إن أردت التثبيت فقط بلا بناء، حمّله من هناك.
 
 ---
 
@@ -9,13 +9,17 @@
 
 | المسار | الغرض |
 |---|---|
-| `releases/CarCare-v1.2.0.apk` | **آخر إصدار جاهز للتثبيت** (موقّع، android-arm64) |
-| `lib/` | كود التطبيق (18 ملف Dart) |
+| `releases/CarCare-v1.3.0.apk` | **آخر إصدار جاهز للتثبيت** (android-arm64) · `CarCare-v1.2.0.apk` الإصدار السابق |
+| `lib/` | كود التطبيق (23 ملف Dart) |
+| `lib/services/mail/` + `lib/services/otp_service.dart` | خدمة البريد (SMTP) ومحرك رموز التحقق (§7) |
+| `build_release.sh` | يبني APK ويمرّر إعدادات البريد من `android/smtp.env` (§3.د) |
+| `android/smtp.env.example` | نموذج إعدادات البريد — انسخه إلى `android/smtp.env` (مُتجاهَل في git) |
 | `test/` | 3 ملفات اختبار (`gate_and_recovery_test.dart`, `layout_test.dart`, `screens_test.dart`) |
 | `assets/` | الصور والأصول |
 | `android/` | مشروع أندرويد (الحزمة `com.carcare.maintenance`) |
 | `web/` | ملفات الويب (تشمل `sqlite3.wasm` و`sqflite_sw.js` لعمل SQLite في المتصفح) |
 | `license.json` | **ملف التحكم عن بُعد** — يقرأه التطبيق عند كل تشغيل (§6) |
+| `docs/RELEASE_NOTES_1.3.0.md` | ملاحظات إصدار 1.3.0 (البريد + OTP + لوحة المفاتيح) |
 | `docs/RELEASE_NOTES_1.2.0.md` | ملاحظات وتوثيق إصدار 1.2.0 |
 | `docs/make_launcher_icons.py` | سكربت توليد أيقونة الإطلاق |
 | `docs/SESSION_LOG.md` | سجل التطوير: القرارات والمشاكل وحلولها |
@@ -86,6 +90,20 @@ keytool -genkey -v -keystore android/release-key.jks -keyalg RSA -keysize 2048 -
 flutter build apk --debug
 ```
 
+### 3.د — إعدادات البريد (مطلوبة لرموز التحقق منذ 1.3.0)
+التطبيق يرسل رموز OTP عبر Gmail SMTP. البيانات **لا تُكتب في الكود** بل تُمرّر وقت البناء:
+```bash
+cp android/smtp.env.example android/smtp.env   # ثم ضع بريد Gmail + App Password
+./build_release.sh                             # pub get + analyze + test + build apk --release مع --dart-define
+```
+أو يدوياً:
+```bash
+flutter build apk --release --target-platform android-arm64 \
+  --dart-define=SMTP_USER=you@gmail.com --dart-define="SMTP_PASS=xxxx xxxx xxxx xxxx" --dart-define=SMTP_NAME=CarCare
+```
+> **App Password**: Google Account → Security → 2-Step Verification → App passwords. لا تستخدم كلمة مرور الحساب.
+> بدون هذه الإعدادات يُبنى التطبيق لكن يعرض "خدمة البريد غير متاحة" عند طلب رمز. على الويب يعمل دائماً بوضع المعاينة (الرمز يُعرض داخل التطبيق).
+
 ### التحقق والتثبيت
 ```bash
 $ANDROID_HOME/build-tools/35.0.0/apksigner verify --print-certs build/app/outputs/flutter-apk/app-release.apk
@@ -100,7 +118,7 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 1. عدّل الكود.
 2. `pubspec.yaml` → `version: X.Y.Z+N` — **N (versionCode) يجب أن يزيد** كل إصدار.
 3. `flutter analyze && flutter test`.
-4. `flutter build apk --release --target-platform android-arm64`.
+4. `./build_release.sh` (يمرّر إعدادات البريد تلقائياً) أو `flutter build apk --release --target-platform android-arm64 --dart-define=…`.
 5. انسخ الناتج إلى `releases/CarCare-vX.Y.Z.apk`.
 6. حدّث ملاحظات الإصدار في `docs/`.
 7. `git add -A && git commit -m "vX.Y.Z: ..." && git tag vX.Y.Z && git push origin main --tags`.
@@ -117,6 +135,9 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 | `INSTALL_FAILED_VERSION_DOWNGRADE` | versionCode لم يزد | ارفع الرقم بعد `+` |
 | شاشة "الترخيص موقوف نهائياً" | `license.json` غير موجود على GitHub (404) | أعِد الملف إلى جذر `main` |
 | شاشة بيضاء على الويب | ملفات `web/sqlite3.wasm` / `sqflite_sw.js` مفقودة | لا تحذفها |
+| "خدمة البريد غير متاحة" على الهاتف | APK بُني بدون `--dart-define=SMTP_*` | §3.د |
+| "فشل التحقق من حساب البريد المُرسِل" | كلمة مرور الحساب بدل App Password أو أُلغيت | أنشئ App Password جديدة وأعِد البناء |
+| الرمز لم يصل | تأخر Gmail / مجلد Spam | انتظر دقيقة، تحقّق من Spam، أو "إعادة الإرسال" بعد 60 ث |
 
 ---
 
@@ -136,3 +157,19 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 | بلا إنترنت | — | آخر حالة محفوظة |
 
 التعديل يصل خلال ثوانٍ. الشيفرة في `lib/services/license_service.dart` ومغطّاة بالاختبارات.
+
+---
+
+## 7. رموز التحقق عبر البريد (منذ 1.3.0)
+
+| العنصر | القيمة |
+|---|---|
+| الرمز | 6 أرقام عشوائية (`Random.secure`) |
+| الصلاحية | 10 دقائق |
+| المحاولات | 5 ثم يُلغى الرمز |
+| إعادة الإرسال | بعد 60 ثانية |
+| التخزين | SHA-256(الرمز+البريد+الغرض) في الذاكرة فقط |
+| المُرسِل | Gmail SMTP `smtp.gmail.com:465` (SSL) بحزمة `mailer` |
+| الاستخدام | تأكيد البريد عند إنشاء الحساب (الحساب لا يُنشأ قبل التحقق) + استعادة كلمة المرور |
+
+الشيفرة: `lib/services/otp_service.dart` (المحرك + قالب الرسالة HTML/نص)، `lib/services/mail/` (النقل)، `lib/widgets/otp_verify_panel.dart` (الواجهة). التفاصيل في `docs/RELEASE_NOTES_1.3.0.md`.
